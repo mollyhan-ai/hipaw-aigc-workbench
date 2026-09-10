@@ -263,14 +263,5 @@ npm run build:canvas
 - [ ] 增加团队账号、权限、共享存储与审核记录。
 - [ ] 支持运营排期、发布衔接与内容效果复盘。
 
-## 致谢与许可
-
-- [basketikun / infinite-canvas](https://github.com/basketikun/infinite-canvas)：提供画布基础。本项目基于上游 v0.18.0 源码快照进行嵌入适配，保留作者署名及 [MIT 许可证](vendor/infinite-canvas/LICENSE)。
-- fal：提供图片生成服务，调用位置见 `server/index.mjs`；相关配置由使用者自行提供。
-- 即梦：界面布局参考其公开创作页面，HiPaw 使用白色主题，未复用其 Logo、作品或专有字体。
-
-HiPaw 仓库根目录目前尚未设置独立的 `LICENSE`；上述 MIT 说明仅对应引入的画布项目，不作为整个仓库的许可声明。
-
----
 
 [查看视觉规范](docs/visual-guidelines.md) · [查看本地服务](server/index.mjs) · [查看测试](tests/workbench.test.mjs)
