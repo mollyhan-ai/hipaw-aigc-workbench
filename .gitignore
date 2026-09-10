@@ -9,3 +9,5 @@ work/
 vendor/infinite-canvas/web/node_modules/
 vendor/infinite-canvas/web/dist/
 vendor/infinite-canvas/.git/
+
+_site/

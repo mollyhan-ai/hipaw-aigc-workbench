@@ -627,12 +627,13 @@ function render(){
   document.body.dataset.page = S.page;
   if(S.page!=='assets' && $('#assetModal').open) closeAssetModal(false);
   $('#nav').innerHTML = NAV.map(([id,label,tag])=>
-    `<button data-nav="${id}" ${S.page===id?'aria-current="page"':''} title="${label}${tag?' · '+tag:''}">${hIcon(id)}<span class="nav-label">${label}</span></button>`).join('');
+    `<button data-nav="${id}" ${S.page===id?'aria-current="page"':''} title="${label}${tag?' · '+tag:''}">${hIcon(id)}<span class="nav-label">${label}</span>${tag?`<span class="tag">${tag}</span>`:''}</button>`).join('');
   $('#title').textContent = META[S.page][0];
   $('#subtitle').textContent = META[S.page][1];
   document.querySelectorAll('#roleSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.role===S.role));
   const v = {assets:viewAssets, create:viewCreate, topics:viewTopics, vet:viewVet, designer:viewDesigner, brand:viewBrand, arch:viewArch}[S.page]();
   $('#view').innerHTML = v;
+  showHiPawOnlineStatus();
   if(S.page==='designer') mountHiPawCanvas();
   if(S.page==='vet' && S.step===4) setupPrompter();
   document.querySelectorAll('.sec-edit').forEach(autosize);

@@ -3,8 +3,8 @@ import { theme as antdTheme } from "antd";
 
 const neutral = {
     light: {
-        primary: "#2563eb",
-        primaryHover: "#1d4ed8",
+        primary: "#17302d",
+        primaryHover: "#2b4a46",
         primaryText: "#ffffff",
         elevatedBg: "#ffffff",
         itemHoverBg: "rgba(23, 23, 23, 0.06)",

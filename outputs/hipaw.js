@@ -4,6 +4,14 @@ const hIcon = name => HIPAW_ICONS[name] || HIPAW_ICONS.picture;
 const H = { brand:null, falConfigured:false, refs:[], frame:null, ready:false, outbox:[], useBrand:true, useMascot:false, prompt:'', ratio:'3:4', count:1, busy:false, job:null, assets:[], jobs:[], brandDraft:null };
 const hx = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function hapi(path, options={}) {
+  if(window.HIPAW_STATIC){
+    if(!options.method || options.method==='GET'){
+      if(path==='/brand')return {brand:structuredClone(window.HIPAW_STATIC.brand),falConfigured:false};
+      if(path==='/assets')return {assets:[]};
+      if(path==='/jobs')return {jobs:[]};
+    }
+    throw new Error('在线页面尚未连接后台服务，请在本机工作台使用此功能。');
+  }
   const response = await fetch('/api'+path, options);
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || '操作没有完成，请重试');
@@ -62,7 +70,7 @@ function mountHiPawCanvas() {
   H.ready=false;
   const frame=document.createElement('iframe'); H.frame=frame;
   frame.title='HiPaw 设计师无限画布';
-  frame.src='/canvas-app/embed/hipaw-'+encodeURIComponent(S.task)+'?title='+encodeURIComponent(TASKS.find(t=>t.id===S.task)?.topic||'自由创作');
+  frame.src=(window.HIPAW_STATIC?.canvasBase||'/canvas-app')+'/embed/hipaw-'+encodeURIComponent(S.task)+(window.HIPAW_STATIC?'/':'')+'?title='+encodeURIComponent(TASKS.find(t=>t.id===S.task)?.topic||'自由创作');
   frame.allow='clipboard-read; clipboard-write; fullscreen';
   frame.onload=()=>frame.contentWindow?.postMessage({type:'hipaw:ping'},location.origin);
   mount.appendChild(frame);
@@ -162,3 +170,19 @@ document.addEventListener('click',async e=>{const button=e.target.closest('[data
   if(action==='videoLegacy'){S.dType='理疗视频';render();}
   if(action==='uploadAsset'){const input=document.createElement('input');input.type='file';input.accept='image/png,image/jpeg,image/webp';input.onchange=async()=>{try{if(!input.files[0])return;const f=input.files[0];const uploaded=await hapi('/uploads',{method:'POST',headers:{'Content-Type':f.type},body:f});await hapi('/assets',hjson('POST',{url:uploaded.url,title:f.name,source:'upload'}));await syncDesignAssets();await openHLibrary();}catch(err){toast(err.message);}};input.click();}
 }catch(err){toast(err.message);if(action==='generate'){H.busy=false;updateGenerationUi(err.message);}}});
+
+function showHiPawOnlineStatus(){
+  if(!window.HIPAW_STATIC)return;
+  const noteId='hipawOnlineNote';
+  if(!document.getElementById(noteId)){
+    const note=document.createElement('div');note.id=noteId;note.className='hipaw-online-note';
+    note.textContent='在线预览 · 病例与内容为示例；生图和资料保存未开启。画布编辑仅保存在当前浏览器。';
+    document.getElementById('view').before(note);
+  }
+  const label=document.querySelector('.local-label');if(label)label.textContent='在线预览';
+  for(const el of document.querySelectorAll('#brandForm input,#brandForm textarea,#brandForm select,#brandForm button,#falKey,[data-h="saveKey"],[data-h="uploadAsset"],[data-h="saveSelection"]')){el.disabled=true;el.title='此功能需要本机工作台服务';}
+  for(const [id,message] of Object.entries({hConnection:'在线页面未连接生图服务',hProgress:'可编辑与导出画布；真实生图请使用本机工作台。',keyStatus:'在线页面不接收或保存 API 密钥。',brandSaveStatus:'当前展示默认品牌资料；请在本机工作台编辑保存。'})){const el=document.getElementById(id);if(el)el.textContent=message;}
+  const key=document.getElementById('falKey');if(key)key.placeholder='在线页面不接收密钥';
+  const keyNote=document.querySelector('.brand-preview [data-h="saveKey"] + .hipaw-note');if(keyNote)keyNote.textContent='使用本机版本配置生图服务。';
+  const brandNote=document.querySelector('.brand-form-heading .hipaw-note');if(brandNote)brandNote.textContent='默认资料预览，编辑保存请使用本机版本';
+}

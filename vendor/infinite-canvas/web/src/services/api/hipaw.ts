@@ -7,6 +7,7 @@ export const setHiPawOptions = (next: typeof options) => { options=next; };
 export const isHiPaw = () => window.location.pathname.includes('/embed/');
 
 export async function requestHiPaw(config: AiConfig, prompt: string, references: ReferenceImage[] = [], signal?: AbortSignal): Promise<Array<{id:string;dataUrl:string}>> {
+    if (import.meta.env.VITE_HIPAW_STATIC === 'true') throw new Error('在线页面尚未连接生图服务，请使用本机 HiPaw 工作台。');
     const request = async (path: string, init: RequestInit = {}) => {
         const response = await fetch('/api'+path, {...init,signal});
         const result = await response.json();
