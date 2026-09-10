@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HiPaw · 内容工作台</title>
+<style>
+:root{
+  --ink:#17302D; --ink-2:#2B4A46; --paper:#EEF1EC; --surface:#FFFFFF; --line:#D5DCD5; --muted:#5B6D68;
+  --iodine:#E0A21A; --iodine-soft:#FBF0D6; --iodine-text:#855600;
+  --alert:#B3412E; --alert-soft:#F8E3DE; --ok:#2E7550; --ok-soft:#DFEFE5; --trend:#34508F; --trend-soft:#E4E9F6;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"PingFang SC","HarmonyOS Sans SC","Noto Sans CJK SC","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;font-size:14px;line-height:1.6;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer;color:inherit}
+button:disabled{cursor:not-allowed}
+:focus-visible{outline:2px solid var(--iodine);outline-offset:2px}
+h1,h2,h3,h4{font-weight:600}
+
+.app{display:grid;grid-template-columns:212px minmax(0,1fr);min-height:100vh;background:linear-gradient(to right,var(--ink) 212px,transparent 212px)}
+.side{background:var(--ink);color:#E6ECE8;padding:20px 12px;display:flex;flex-direction:column;gap:26px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px;padding:0 8px}
+.brand small{display:block;font-weight:400;font-size:12px;color:#9FB3AD;line-height:1.3}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{background:none;border:0;color:#C9D5D0;text-align:left;padding:9px 12px;border-radius:8px;display:flex;justify-content:space-between;align-items:center}
+.nav button:hover{background:rgba(255,255,255,.07)}
+.nav button[aria-current="page"]{background:var(--paper);color:var(--ink);font-weight:600}
+.nav .tag{font-size:11px;padding:0 8px;border-radius:999px;background:rgba(255,255,255,.12);font-weight:400}
+.nav button[aria-current="page"] .tag{background:var(--iodine-soft);color:var(--iodine-text)}
+.side-foot{margin-top:auto;font-size:12px;color:#8EA39D;padding:0 8px;line-height:1.7}
+
+main{padding:22px 30px 56px;min-width:0}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.topbar h1{font-size:22px;margin:0;letter-spacing:.01em}
+.topbar p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.role{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px;flex-wrap:wrap}
+.seg button{border:0;background:none;padding:5px 14px;border-radius:7px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.pad{padding:20px 22px}
+.pad h3,.tools h3,.inbox h3{font-size:13px;font-weight:500;color:var(--muted);margin:20px 0 8px}
+.pad h3:first-child,.tools h3:first-child,.inbox h3:first-child{margin-top:0}
+.btn{border:1px solid var(--line);background:var(--surface);padding:7px 14px;border-radius:8px}
+.btn:hover:not(:disabled){border-color:var(--ink)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.primary:hover:not(:disabled){background:var(--ink-2)}
+.btn:disabled{opacity:.45}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-block;font-size:12px;padding:0 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--surface);white-space:nowrap;line-height:1.8}
+.src-case{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.src-season{background:var(--iodine-soft);border-color:transparent;color:var(--iodine-text)}
+.src-trend{background:var(--trend-soft);border-color:transparent;color:var(--trend)}
+.src-self{background:#ECE6F2;border-color:transparent;color:#5A3E78}
+/* 开始创作 */
+.create{max-width:860px;margin:0 auto}
+.hello{font-size:26px;text-align:center;margin:18px 0 6px;letter-spacing:.02em}
+.hello-sub{text-align:center;color:var(--muted);font-size:13.5px;margin:0 0 20px}
+.composer{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;padding:16px 16px 12px}
+.composer:focus-within{border-color:var(--ink)}
+.attach{width:96px;height:96px;border:1.5px dashed #B9C6BF;border-radius:12px;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;color:var(--muted);padding:6px;line-height:1.4}
+.attach .plus{font-size:22px;line-height:1;color:var(--ink-2)}
+.attach.on{border-style:solid;border-color:var(--iodine);background:var(--iodine-soft);color:var(--iodine-text)}
+.composer textarea{border:0;min-height:96px;font-size:15px;padding:4px 0;resize:none;outline:none;background:transparent}
+.composer-foot{grid-column:1 / -1;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.composer-foot .hint{margin:0}
+.send-err{font-size:12.5px;color:var(--alert)}
+.scenes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
+.scene{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-align:left;font-size:13.5px;line-height:1.45}
+.scene:hover{border-color:#AFBDB6}
+.scene small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.chat{margin-top:26px;display:flex;flex-direction:column;gap:14px}
+.me{align-self:flex-end;background:var(--ink);color:#fff;padding:10px 14px;border-radius:12px 12px 3px 12px;max-width:80%;font-size:14.5px}
+.me .chip{margin-left:6px;background:rgba(255,255,255,.14);color:#fff;border-color:transparent}
+.agent{padding:18px 20px}
+.agent h4{font-size:13px;color:var(--muted);font-weight:500;margin:18px 0 8px}
+.agent h4:first-child{margin-top:0}
+.match{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;flex-wrap:wrap}
+.match b{display:block}
+.angles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.angle{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;background:#FAFBF9}
+.angle b{font-size:14.5px}
+.angle p{margin:0;font-size:13px;color:var(--ink-2)}
+.angle .fit{font-size:12px;color:var(--muted)}
+.angle .btn{margin-top:auto;align-self:flex-start}
+.thinking{padding:16px 20px;color:var(--muted)}
+@media (max-width:880px){ .scenes{grid-template-columns:1fr 1fr} .angles{grid-template-columns:1fr} .composer{grid-template-columns:1fr} }
+.hint{font-size:12.5px;color:var(--muted);margin:0 0 10px}
+
+/* 选题池 */
+.topics{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);gap:20px;align-items:start}
+.filters{display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.fbtn{border:1px solid var(--line);background:transparent;padding:3px 12px;border-radius:999px;color:var(--muted);font-size:13px}
+.fbtn[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.demo-note{margin-left:auto;font-size:12px;color:var(--muted)}
+.tlist{overflow:hidden}
+.trow{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:14px;align-items:center;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:14px 16px}
+.trow:last-child{border-bottom:0}
+.trow:hover{background:#F7F9F6}
+.trow[aria-pressed="true"]{background:var(--iodine-soft);box-shadow:inset 3px 0 0 var(--iodine)}
+.trow .chip{justify-self:start}
+.t-body strong{display:block;font-size:15px}
+.signal{font-size:12.5px;color:var(--muted)}
+.t-status{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.t-status.mine{color:var(--ok);font-weight:600}
+.detail{padding:20px 22px;position:sticky;top:20px}
+.detail h2{font-size:18px;margin:10px 0 2px;line-height:1.45}
+.sub{font-size:13px;color:var(--muted);font-weight:500;margin:22px 0 8px}
+.cascade{list-style:none;margin:0 0 0 6px;padding:0 0 0 14px;border-left:2px solid var(--line)}
+.cascade li{position:relative;padding:7px 0 7px 12px}
+.cascade li::before{content:"";position:absolute;left:-14px;top:19px;width:14px;height:2px;background:var(--line)}
+.cascade li strong{font-weight:600;margin-right:6px}
+.cascade li span.who{display:block;font-size:12.5px;color:var(--muted)}
+.cta{margin-top:22px;display:flex;gap:8px;flex-wrap:wrap}
+
+/* 口播流程 */
+.stepper{list-style:none;display:flex;gap:6px;padding:0;margin:0 0 18px;flex-wrap:wrap}
+.stepper button{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);padding:4px 13px 4px 5px;border-radius:999px;color:var(--muted);font-size:13px}
+.stepper .n{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--paper);font-size:12px;font-variant-numeric:tabular-nums}
+.stepper button.done .n{background:var(--ok-soft);color:var(--ok)}
+.stepper button[aria-current="step"]{border-color:var(--ink);color:var(--ink);font-weight:600}
+.stepper button[aria-current="step"] .n{background:var(--iodine);color:var(--ink)}
+.stepper button:disabled{opacity:.5}
+.vgrid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,1fr);gap:20px;align-items:start}
+.big{font-size:18px;font-weight:600;margin:0;line-height:1.45}
+.case{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;cursor:pointer}
+.case input{margin-top:5px;accent-color:var(--ink)}
+.case small{display:block;color:var(--muted);font-size:12.5px}
+.script p{margin:0 0 14px;display:grid;grid-template-columns:60px minmax(0,1fr);gap:12px;line-height:1.9;font-size:15px}
+.script .lab{font-size:12px;color:var(--muted);padding-top:5px}
+.script .sec{margin:0 0 14px;display:grid;grid-template-columns:60px minmax(0,1fr);gap:12px;line-height:1.9;font-size:15px}
+.script .lab em{display:block;font-style:normal;color:var(--iodine-text);font-size:11.5px;line-height:1.4}
+.script textarea{width:100%;display:block;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:inherit;font-size:15px;line-height:1.9;resize:none;background:#FAFBF9;color:var(--ink);overflow:hidden;min-height:44px}
+.script textarea:hover{border-color:#AFBDB6}
+.script textarea:focus{border-color:var(--ink);background:#fff;outline:none;box-shadow:0 0 0 2px var(--iodine-soft)}
+.linkbtn{border:0;background:none;padding:0 0 0 6px;color:var(--muted);font-size:12.5px;text-decoration:underline;text-underline-offset:3px}
+.linkbtn:hover{color:var(--ink)}
+.warn{color:var(--iodine-text)}
+.edit-done{margin-top:6px}
+.uploader{margin-top:14px;border:1px solid var(--line);border-radius:12px;background:#FAFBF9;padding:14px}
+.dropzone{border:1.5px dashed #B9C6BF;border-radius:10px;padding:30px 16px;text-align:center;background-color:#fff;background-image:radial-gradient(#DCE2DC 1px,transparent 1px);background-size:14px 14px}
+.dropzone.over{border-color:var(--iodine);background-color:var(--iodine-soft)}
+.dropzone b{display:block;font-size:15px;margin-bottom:4px}
+.dropzone.slim{padding:12px 16px;margin-top:10px}
+.kbd{display:inline-block;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 6px;font-size:12px;background:#fff;font-weight:400}
+.flist{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+.fitem{position:relative;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px}
+.fitem .x{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;line-height:1;padding:0;z-index:1}
+.fitem small{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:5px 2px 3px}
+.fitem label{font-size:11.5px;color:var(--muted);display:block;margin:0 2px 2px}
+.fitem input[type=date]{width:100%;font:inherit;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:#fff;color:var(--ink)}
+.upform{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.upform label{font-size:12.5px;color:var(--muted);display:block;margin-bottom:4px}
+.upform select{width:100%}
+.up-err{color:var(--alert);font-size:12.5px;margin:8px 0 0}
+.up-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+.thumb-real{width:100%;aspect-ratio:16 / 10;object-fit:cover;border-radius:6px;display:block;background:#1D2624}
+.adetail .thumb .thumb-real{aspect-ratio:auto;max-height:340px;object-fit:contain}
+.vwrap{position:relative}
+.vwrap .dur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:0 5px;border-radius:3px;font-variant-numeric:tabular-nums}
+.acard.proc{cursor:progress;background:#FFFCF3;border-color:var(--iodine)}
+.case-search{width:100%;font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:#fff;color:var(--ink)}
+.case-list{border:1px solid var(--line);border-radius:8px;background:#fff;max-height:210px;overflow:auto;margin-top:6px}
+.case-list .cap{font-size:12px;color:var(--muted);padding:6px 10px 2px}
+.case-opt{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:7px 10px;font-size:13px}
+.case-opt:hover{background:var(--iodine-soft)}
+.case-opt small{color:var(--muted);font-size:12px;white-space:nowrap}
+.case-picked{border:1px solid var(--ink);border-radius:8px;background:#fff;padding:8px 10px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.case-picked b{display:block;font-size:14px}
+.case-picked .linkbtn{white-space:nowrap;flex:none}
+.dept-chips{display:flex;flex-wrap:wrap;gap:6px}
+.proc-line{display:block;font-size:12px;color:var(--iodine-text);margin:2px 2px 0}
+@media (max-width:880px){ .upform{grid-template-columns:1fr} }
+mark.m-alert{background:var(--alert-soft);color:var(--alert);box-shadow:inset 0 -2px 0 var(--alert);padding:0 2px;border-radius:2px}
+mark.m-med{background:var(--iodine-soft);color:var(--iodine-text);border-bottom:2px dashed var(--iodine);padding:0 2px}
+.m-fixed{background:var(--ok-soft);color:var(--ok);padding:0 2px;border-radius:2px}
+.script p.meta-line,.meta-line{display:block;font-size:12.5px;color:var(--muted);margin:0 0 16px;line-height:1.6}
+.issue{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:10px}
+.issue.done{background:#F7F9F6}
+.issue .rule{font-size:12.5px;font-weight:600;margin-bottom:4px}
+.rule.alert{color:var(--alert)} .rule.med{color:var(--iodine-text)} .rule.ok{color:var(--ok)}
+.issue p{margin:0 0 8px;font-size:13.5px}
+.issue .was{color:var(--muted);text-decoration:line-through}
+.sign{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:8px;background:var(--iodine-soft);margin:14px 0;cursor:pointer}
+.sign input{margin-top:5px;accent-color:var(--ink)}
+.left-count{font-size:13px;color:var(--alert);font-weight:600}
+.left-count.clear{color:var(--ok)}
+
+.shoot{display:grid;grid-template-columns:auto minmax(260px,1fr);gap:28px;align-items:start}
+.phone{width:300px;height:600px;border-radius:42px;background:#0E1B19;padding:11px;box-shadow:0 24px 40px -24px rgba(23,48,45,.6)}
+.cam{position:relative;width:100%;height:100%;border-radius:32px;overflow:hidden;background:radial-gradient(120% 70% at 50% 78%,#3F5650 0%,#1D2C29 58%,#101917 100%)}
+.silhouette{position:absolute;left:50%;bottom:-70px;width:250px;height:190px;transform:translateX(-50%);border-radius:50%;background:rgba(255,255,255,.05)}
+.face{position:absolute;left:50%;top:64%;width:140px;height:178px;transform:translate(-50%,-50%);border:2px dashed rgba(255,255,255,.32);border-radius:50% 50% 46% 46%}
+.prompter{position:absolute;left:0;right:0;top:40px;height:250px;overflow:hidden;padding:0 22px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 16%,#000 80%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 16%,#000 80%,transparent 100%)}
+.prompt-inner{padding:70px 0 220px;color:#fff;font-weight:600;line-height:1.6;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.prompt-inner p{margin:0 0 .7em}
+.readline{position:absolute;left:12px;right:12px;top:118px;height:2px;background:var(--iodine);opacity:.9}
+.readline::before{content:"";position:absolute;left:-2px;top:-4px;border:5px solid transparent;border-left:7px solid var(--iodine)}
+.rec{position:absolute;top:12px;left:50%;transform:translateX(-50%);font-size:12px;color:#fff;background:rgba(0,0,0,.4);padding:1px 10px;border-radius:999px;font-variant-numeric:tabular-nums;display:flex;gap:6px;align-items:center}
+.rec .dot{width:8px;height:8px;border-radius:50%;background:#8A9591}
+.recording .rec .dot{background:#E5484D}
+.recbtn{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);width:62px;height:62px;border-radius:50%;border:4px solid #fff;background:transparent;padding:0;display:grid;place-items:center}
+.recbtn i{display:block;width:44px;height:44px;border-radius:50%;background:#E5484D;transition:all .18s}
+.recording .recbtn i{width:22px;height:22px;border-radius:5px}
+.qr-wrap{display:flex;gap:16px;align-items:center}
+.qr{display:grid;grid-template-columns:repeat(21,1fr);width:120px;height:120px;padding:6px;background:#fff;border:1px solid var(--line);flex:none}
+.qr i.on{background:var(--ink)}
+.ctrl{display:grid;grid-template-columns:70px 1fr 36px;gap:10px;align-items:center;font-size:13px;margin-bottom:6px}
+.ctrl input{accent-color:var(--ink);width:100%}
+.ctrl output{color:var(--muted);font-variant-numeric:tabular-nums}
+
+.tl-ruler{display:grid;grid-template-columns:56px 1fr;gap:10px;font-size:11.5px;color:var(--muted);margin-bottom:6px}
+.tl-ruler div{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
+.track{display:grid;grid-template-columns:56px 1fr;gap:10px;align-items:center;margin-bottom:8px}
+.track .lab{font-size:12px;color:var(--muted)}
+.bar{position:relative;height:32px;background:var(--paper);border-radius:6px;overflow:hidden;display:flex}
+.bar > span{display:flex;align-items:center;padding-left:6px;font-size:11px;white-space:nowrap;overflow:hidden;border-right:1px solid #fff}
+.v{background:#A9C3B9;color:var(--ink)}
+.cut{background:repeating-linear-gradient(45deg,#EACFC8 0 5px,#F7ECE9 5px 10px);color:var(--alert)}
+.sub-b{background:#D6E0DB;color:var(--ink-2)}
+.gap{background:transparent}
+.music{background:#C9D3E8;color:var(--trend)}
+.slot{background:var(--iodine-soft);color:var(--iodine-text);outline:1.5px dashed var(--iodine);outline-offset:-2px}
+.checks{list-style:none;padding:0;margin:0}
+.checks li{position:relative;padding:6px 0 6px 26px;font-size:13.5px;border-bottom:1px solid var(--line)}
+.checks li:last-child{border-bottom:0}
+.checks li::before{content:"";position:absolute;left:4px;top:12px;width:9px;height:5px;border-left:2px solid var(--ok);border-bottom:2px solid var(--ok);transform:rotate(-45deg)}
+.empty{padding:48px 28px;text-align:center}
+.empty p{color:var(--muted);max-width:30em;margin:6px auto 18px}
+
+/* 包装台 */
+.design{display:grid;grid-template-columns:240px minmax(0,1fr) 292px;gap:16px;align-items:start}
+.inbox{padding:14px}
+.ibtn{display:block;width:100%;text-align:left;border:1px solid transparent;background:none;padding:10px 11px;border-radius:9px;margin-bottom:4px}
+.ibtn:hover{background:#F7F9F6}
+.ibtn[aria-pressed="true"]{border-color:var(--ink);background:#F7F9F6}
+.ibtn b{display:block;font-size:14px;line-height:1.45}
+.ibtn small{display:block;color:var(--muted);font-size:12px}
+.st{display:inline-block;font-size:11.5px;margin-top:5px;padding:0 8px;border-radius:999px;background:var(--paper);color:var(--muted)}
+.st.ready{background:var(--iodine-soft);color:var(--iodine-text);font-weight:600}
+.canvas{padding:16px 18px 20px;min-height:600px;background-color:#FAFBF9;background-image:radial-gradient(#D5DCD5 1px,transparent 1px);background-size:18px 18px}
+.canvas-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.canvas-head h2{font-size:17px;margin:0}
+.canvas-head p{margin:0;font-size:12.5px;color:var(--muted)}
+.notice{margin-top:14px;padding:10px 14px;border-radius:8px;background:var(--iodine-soft);color:var(--iodine-text);font-size:13px}
+.cands{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
+.cand{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;text-align:left}
+.cand[aria-pressed="true"]{border-color:var(--iodine);box-shadow:0 0 0 2px var(--iodine)}
+.cand svg{width:100%;height:auto;display:block;border-radius:6px}
+.cap{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);margin-top:8px}
+.cap .rv{color:var(--iodine-text);font-weight:600}
+.canvas-empty{margin:70px auto 0;max-width:24em;text-align:center;color:var(--muted)}
+.loading{margin:90px auto 0;text-align:center;color:var(--muted)}
+.tools{padding:16px 16px 18px}
+.tmpl{display:flex;justify-content:space-between;align-items:center;width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:none;text-align:left}
+.tmpl[aria-pressed="true"]{border-color:var(--ink);background:#F7F9F6;font-weight:600}
+.tmpl .chip{font-weight:400}
+select,textarea{width:100%;font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;color:var(--ink)}
+textarea{min-height:88px;resize:vertical;line-height:1.6}
+.swatches{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.sw{width:22px;height:22px;border-radius:6px;border:1px solid rgba(0,0,0,.08)}
+.lock{font-size:12px;color:var(--muted);margin-left:auto}
+.brandrow{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:6px}
+.tools .btn{width:100%;margin-top:8px}
+
+/* 架构 */
+.arch{display:flex;flex-direction:column;gap:10px}
+.layer{display:grid;grid-template-columns:156px minmax(0,1fr);gap:14px;padding:14px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.lname strong{display:block;font-size:15px}
+.lname span{font-size:12.5px;color:var(--muted);display:block}
+.lname em{font-style:normal;display:inline-block;margin-top:6px;font-size:12px;padding:0 8px;border-radius:999px;background:var(--paper);color:var(--ink-2)}
+.lrow{display:grid;gap:10px}
+.c3{grid-template-columns:repeat(3,minmax(0,1fr))} .c4{grid-template-columns:repeat(4,minmax(0,1fr))} .c2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cell{border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--ink-2);background:#FAFBF9}
+.cell b{display:block;font-size:14px;color:var(--ink);margin-bottom:2px}
+.cell.p1{border-color:var(--iodine);background:#FFFCF3;box-shadow:inset 0 0 0 1px var(--iodine)}
+.cell.later{border-style:dashed;background:transparent;color:var(--muted)}
+.p1tag{font-size:11px;background:var(--iodine);color:var(--ink);border-radius:999px;padding:0 7px;margin-left:6px;font-weight:600;vertical-align:1px}
+.pipe{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px}
+.pipe .cell{position:relative}
+.pipe .cell:not(:last-child)::after{content:"";position:absolute;right:-12px;top:50%;width:8px;height:8px;border-top:2px solid var(--muted);border-right:2px solid var(--muted);transform:translateY(-50%) rotate(45deg)}
+.legend{display:flex;gap:16px;align-items:center;font-size:12.5px;color:var(--muted);margin-bottom:12px;flex-wrap:wrap}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px}
+.notes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:20px}
+.note{padding:16px 18px}
+.note h4{margin:0 0 6px;font-size:14.5px}
+.note p{margin:0;font-size:13.5px;color:var(--ink-2)}
+
+/* 资产库 */
+.assets{display:block;min-width:0}
+.ingest{padding:16px 18px;margin-bottom:14px}
+.ingest-top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.ingest-top b{display:block;font-size:14.5px}
+.pipeline{list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:0;margin:14px 0 0}
+.pipeline li{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--muted);background:#FAFBF9;line-height:1.5;transition:background .2s,border-color .2s}
+.pipeline li b{display:block;color:var(--ink);font-size:13px}
+.pipeline li.active{border-color:var(--iodine);background:var(--iodine-soft);color:var(--iodine-text)}
+.pipeline li.done{border-color:transparent;background:var(--ok-soft);color:var(--ok)}
+.pipeline li.done b{color:var(--ok)}
+.filters select{width:auto;margin-left:auto;padding:3px 8px;font-size:13px}
+.filters.second select{margin-left:0}
+.filters input[type=date]{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:3px 8px;background:#fff;color:var(--ink)}
+.filters .err{font-size:12.5px;color:var(--alert)}
+.filters .count{margin-left:auto;font-size:12.5px;color:var(--muted)}
+.time-note{font-size:12.5px;color:var(--muted)}
+.fbtn .n{margin-left:5px;font-size:12px;font-variant-numeric:tabular-nums}
+.sub-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 10px;padding:8px 10px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.sub-row .lab{font-size:12.5px;color:var(--muted);margin-right:4px}
+.path{display:block;font-size:12px;color:var(--ink-2);margin-bottom:1px}
+.detail .path{margin-top:10px}
+@media (max-width:1100px){ .topics,.assets{grid-template-columns:1fr} .detail{position:static} }
+.agrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.acard{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 8px 10px;text-align:left}
+.acard:hover{border-color:#AFBDB6}
+.acard[aria-pressed="true"]{border-color:var(--iodine);box-shadow:0 0 0 2px var(--iodine)}
+.acard svg,.adetail .thumb svg,.clip svg,.shot svg{width:100%;height:auto;display:block;border-radius:6px}
+.acard b{display:block;font-size:13.5px;margin:8px 2px 0;line-height:1.4}
+.acard .meta{font-size:12px;color:var(--muted);margin:0 2px 6px;display:block}
+.acard .chip{margin-left:2px}
+.auth-no{background:var(--alert-soft);border-color:transparent;color:var(--alert)}
+.adetail .thumb{margin-bottom:12px}
+.adetail p.desc{font-size:13.5px;margin:0}
+.adetail .hint{margin:8px 0}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag-x{display:inline-flex;align-items:center;gap:2px;font-size:12.5px;padding:1px 3px 1px 10px;border-radius:999px;background:var(--paper);border:0}
+.tag-x span{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.tag-x:hover span{background:#fff;color:var(--alert)}
+.topic-filter{display:flex;align-items:center;gap:8px;font-size:13px;background:var(--iodine-soft);color:var(--iodine-text);padding:6px 8px 6px 12px;border-radius:8px;margin-bottom:10px}
+.t-status small{display:block;font-size:12px;text-align:right;color:var(--iodine-text);font-weight:400}
+.t-status small.ok{color:var(--ok)}
+.resbox{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.resbox div{border-radius:8px;padding:9px 12px;font-size:13px;background:var(--ok-soft);color:var(--ok);line-height:1.5}
+.resbox div.lack{background:var(--iodine-soft);color:var(--iodine-text)}
+.resbox b{display:block;font-size:12px;font-weight:600}
+.clips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:10px}
+.clip{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 8px 10px}
+.clip b{display:block;font-size:13px;margin:6px 2px 0}
+.clip.blocked{background:#FBF7F6}
+.clip.blocked svg{filter:grayscale(1);opacity:.45}
+.clip .why{font-size:12px;color:var(--alert);margin:2px 2px 8px}
+.sec-title{font-size:13px;color:var(--muted);font-weight:500;margin:18px 0 0}
+.seq{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 6px;margin-top:10px}
+.shot{flex:0 0 168px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12px}
+.shot.hole{border:1.5px dashed var(--iodine);background:var(--iodine-soft);color:var(--iodine-text);display:flex;align-items:center}
+.shot p{margin:6px 2px 0;line-height:1.5}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-size:13.5px;opacity:0;pointer-events:none;transition:all .2s;max-width:90vw}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:1180px){
+  .design{grid-template-columns:220px minmax(0,1fr)}
+  .tools{grid-column:1 / -1}
+  .pipe{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .pipe .cell::after{display:none}
+}
+@media (max-width:880px){
+  .app{grid-template-columns:1fr;background:none}
+  .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px;padding:12px}
+  .nav{flex-direction:row;flex-wrap:wrap}
+  .side-foot{display:none}
+  main{padding:18px 16px 48px}
+  .topics,.vgrid,.shoot,.design,.layer,.notes,.assets,.resbox{grid-template-columns:1fr}
+  .pipeline{grid-template-columns:1fr 1fr}
+  .c3,.c4,.pipe{grid-template-columns:1fr 1fr}
+  .detail{position:static}
+  .phone{margin:0 auto}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* 素材详情：独立弹窗，列表保留原来的筛选和位置 */
+html{scrollbar-gutter:stable}
+.assets .acard{min-width:0;padding:10px 10px 14px}
+.assets .acard b{font-size:15px;margin-top:12px}
+.assets .acard .meta{font-size:13px;line-height:1.65;margin-top:5px}
+.assets .acard .chip{font-size:13px}
+.assets .acard:hover{border-color:var(--ink);box-shadow:0 4px 16px rgba(23,48,45,.07)}
+.assets .acard video{pointer-events:none}
+.asset-modal{padding:0;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--ink);width:min(1240px,calc(100vw - 64px));height:min(860px,calc(100dvh - 64px));max-width:none;max-height:none;overflow:hidden;box-shadow:0 24px 96px rgba(0,0,0,.24)}
+.asset-modal[open]{display:flex;flex-direction:column}
+.asset-modal::backdrop{background:rgba(12,28,24,.58)}
+.asset-modal-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 22px;border-bottom:1px solid var(--line);flex:none}
+.asset-modal-heading{display:flex;align-items:center;gap:14px;min-width:0}
+.asset-modal-heading h2{font-size:16px;margin:0;white-space:nowrap}
+.asset-modal-count{font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.asset-modal-actions{display:flex;align-items:center;gap:8px}
+.asset-modal-actions .btn{min-height:40px;font-size:14px;white-space:nowrap}
+.asset-modal-close{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--line);border-radius:8px;background:white;font-size:24px;line-height:1;margin-left:8px}
+.asset-modal-close:hover{background:var(--paper)}
+.asset-modal-body{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(320px,1fr);flex:1;min-height:0}
+.asset-modal-media{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px;min-width:0;min-height:0;padding:32px;background:#E8EDE8;overflow:auto}
+.asset-modal-media .thumb{width:100%;min-height:0;margin:0;display:flex;align-items:center;justify-content:center}
+.asset-modal-media .thumb svg{width:100%;height:auto;max-height:calc(100dvh - 250px);border-radius:10px}
+.asset-modal-media .vwrap{width:100%;min-width:0}
+.asset-modal-media .thumb-real{display:block;max-width:100%;width:100%;height:auto;max-height:calc(100dvh - 250px);aspect-ratio:auto;object-fit:contain;border-radius:10px;background:#1D2624}
+.asset-modal-media .media-caption{font-size:13px;color:var(--muted);text-align:center;margin:0}
+.asset-modal-info{min-width:0;overflow-y:auto;padding:26px 28px;overscroll-behavior:contain;border-left:1px solid var(--line)}
+.asset-modal-info h2{font-size:22px;line-height:1.5;overflow-wrap:anywhere;margin-bottom:10px}
+.asset-modal-info .signal{font-size:14px;line-height:1.8}
+.asset-modal-info .sub{font-size:14px;margin-top:26px}
+.asset-modal-info p.desc{font-size:16px;line-height:1.85}
+.asset-modal-info .hint,.asset-modal-info .checks{font-size:14px;line-height:1.8}
+.asset-modal-info .tag-x{font-size:14px;padding:5px 6px 5px 12px;min-height:36px}
+.asset-modal-info .tag-x span{width:22px;height:22px}
+.asset-modal-info .chip{font-size:14px;padding:3px 10px}
+.asset-modal-info .row .btn{white-space:normal;text-align:left}
+@media(max-width:1360px){.agrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1050px){.agrid{grid-template-columns:repeat(2,minmax(0,1fr))}.asset-modal-body{grid-template-columns:minmax(0,1.2fr) minmax(300px,1fr)}.asset-modal-media{padding:22px}.asset-modal-info{padding:22px}}
+@media(max-width:720px){
+  .asset-modal{width:100%;height:100dvh;max-width:100%;max-height:100dvh;margin:0;border:0;border-radius:0}
+  .asset-modal-head{padding:12px 16px;gap:8px;padding-top:max(12px,env(safe-area-inset-top))}
+  .asset-modal-heading{gap:10px}.asset-modal-heading h2{font-size:15px}
+  .asset-modal-actions{gap:6px}.asset-modal-actions .btn{width:40px;padding:0;font-size:19px}
+  .asset-modal-actions .nav-label{display:none}.asset-modal-close{margin-left:0}
+  .asset-modal-body{display:block;overflow-y:auto;overscroll-behavior:contain}
+  .asset-modal-media{padding:24px 20px;min-height:220px;overflow:visible}
+  .asset-modal-media .thumb-real,.asset-modal-media .thumb svg{max-height:42dvh}
+  .asset-modal-info{overflow:visible;border-left:0;border-top:1px solid var(--line);padding:22px 20px max(28px,env(safe-area-inset-bottom))}
+}
+@media(max-width:560px){.agrid{grid-template-columns:1fr}}
+</style>
+<link rel="stylesheet" href="/hipaw.css">
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="#FAFAFA"/><g fill="#171717"><ellipse cx="14" cy="17.6" rx="5" ry="4.2"/><circle cx="8.1" cy="11.6" r="2"/><circle cx="12" cy="8.3" r="2"/><circle cx="16" cy="8.3" r="2"/><circle cx="19.9" cy="11.6" r="2"/></g></svg>
+      <div>HiPaw<small>内容工作台</small></div>
+    </div>
+    <nav class="nav" id="nav" aria-label="主导航"></nav>
+    <div class="side-foot"><span class="local-label">本地原型</span><span>病例为示例</span></div>
+  </aside>
+  <main>
+    <header class="topbar">
+      <div><h1 id="title"></h1><p id="subtitle"></p></div>
+      <div class="role"><span>当前身份</span>
+        <div class="seg" id="roleSeg" role="group" aria-label="切换身份">
+          <button data-role="nurse">护士 小赵</button><button data-role="vet">兽医 王医生</button><button data-role="designer">设计师 小林</button>
+        </div>
+      </div>
+    </header>
+    <div id="view"></div>
+  </main>
+</div>
+<dialog class="asset-modal" id="assetModal" aria-labelledby="assetModalTitle">
+  <header class="asset-modal-head">
+    <div class="asset-modal-heading"><h2 id="assetModalTitle">素材详情</h2><span class="asset-modal-count" id="assetModalCount" role="status" aria-live="polite"></span></div>
+    <div class="asset-modal-actions">
+      <button class="btn" data-act="prevAsset" aria-label="上一份素材"><span aria-hidden="true">←</span><span class="nav-label"> 上一份</span></button>
+      <button class="btn" data-act="nextAsset" aria-label="下一份素材"><span class="nav-label">下一份 </span><span aria-hidden="true">→</span></button>
+      <button class="asset-modal-close" data-act="closeAsset" aria-label="关闭素材详情" autofocus>×</button>
+    </div>
+  </header>
+  <div class="asset-modal-body">
+    <div class="asset-modal-media" id="assetModalMedia"></div>
+    <section class="asset-modal-info adetail" id="assetModalInfo" aria-label="素材信息"></section>
+  </div>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/hipaw.js"></script>
+<script>
+/* ---------- 数据 ---------- */
+const TOPICS = [
+  {id:'t1', title:'公猫频繁蹲砂盆却尿不出来，这是急症', src:'case', signal:'近 30 天 5 家院区接诊 41 例尿闭',
+   formats:[['口播视频','兽医出镜，AI 起草脚本、自动粗剪',true],['小红书封面和图文','设计师用口播截帧套模板'],['泌尿系统示意图','设计师出图，兽医审核后才能用'],['朋友圈海报','套品牌模板直接出']], status:'open',
+   res:['病历 41 份、术后照片 6 张','泌尿系统示意图','缺示意图']},
+  {id:'t2', title:'秋季驱虫：体内体外各隔多久', src:'season', signal:'9 月是全年驱虫咨询最集中的月份',
+   formats:[['口播视频','兽医出镜',true],['朋友圈海报','套品牌模板']], status:'claimed', owner:'李医生',
+   res:['驱虫相关病历 120 份','体内外寄生虫示意图','缺示意图']},
+  {id:'t3', title:'狗狗误吃葡萄，先别在家催吐', src:'trend', signal:'小红书同话题笔记本周上升明显',
+   formats:[['口播视频','兽医出镜，热点要抢时效',true],['小红书图文','设计师出 4 张知识卡']], status:'open',
+   res:['误食病历 9 份','现场画面，只能做口播和知识卡','缺画面']},
+  {id:'t4', title:'绝育术后 7 天，伸缩圈要戴多久', src:'case', signal:'术后回访里被问得最多的问题',
+   formats:[['口播视频','兽医出镜',true],['术后护理卡','随出院单一起打印']], status:'open',
+   res:['术后伤口照片 23 张，公开前需打码',null,'素材齐全']},
+  {id:'t5', title:'老年犬夜里咳嗽，不一定是感冒', src:'case', signal:'心脏科近 30 天复诊 26 例',
+   formats:[['口播视频','兽医出镜',true],['犬心脏结构图','设计师出图，兽医审核后才能用']], status:'open',
+   res:['心脏超声 11 段','犬心脏结构图','缺结构图']},
+  {id:'t6', title:'术后康复理疗，水疗和激光各在练什么', src:'case', signal:'住院康复病例近 30 天 14 例',
+   formats:[['住院理疗视频','设计师用资产库里的理疗片段剪'],['口播视频','骨科医生出镜讲康复原理'],['朋友圈海报','套品牌模板直接出']], status:'claimed', owner:'陈医生',
+   res:['理疗视频 8 段、X 光 5 张',null,'素材齐全']},
+];
+const DEPTS = [
+  ['内科',['猫下泌尿道疾病','库欣综合征']],
+  ['外科',['绝育术']],
+  ['骨科',['术后康复']],
+  ['心脏科',['二尖瓣退行性病变','肥厚型心肌病']],
+  ['皮肤科',['过敏性皮炎']],
+  ['眼科',['角膜溃疡']],
+  ['急诊',['中毒']],
+  ['预防保健',['驱虫']],
+];
+const TOPIC_CLASS = {t1:['内科','猫下泌尿道疾病'], t2:['预防保健','驱虫'], t3:['急诊','中毒'], t4:['外科','绝育术'], t5:['心脏科','二尖瓣退行性病变'], t6:['骨科','术后康复']};
+TOPICS.push(
+  {id:'t7', title:'狗狗喝水多、肚子变大、掉毛，可能是库欣', src:'case', signal:'内分泌门诊近 90 天确诊 12 例',
+   formats:[['口播视频','兽医出镜，讲清三个典型信号',true],['症状对比图','设计师出图，兽医审核后才能用']], status:'open',
+   res:['ACTH 刺激试验报告 12 份、腹部 B 超 9 段','症状对比示意图','缺示意图']},
+  {id:'t8', title:'猫咪突然后腿瘫了，问题可能在心脏', src:'case', signal:'心脏科近 30 天确诊 9 例',
+   formats:[['口播视频','兽医出镜',true],['心脏血栓示意图','设计师出图，兽医审核后才能用']], status:'open',
+   res:['心脏超声 9 段','心脏血栓示意图','缺示意图']}
+);
+TOPIC_CLASS.t7=['内科','库欣综合征']; TOPIC_CLASS.t8=['心脏科','肥厚型心肌病'];
+TOPICS.forEach(t=>{ [t.dept,t.disease]=TOPIC_CLASS[t.id]; });
+const SRC = {case:['来自病例','src-case'], season:['季节节点','src-season'], trend:['平台热点','src-trend'], self:['兽医自提','src-self']};
+
+const ASSETS = [
+  {id:'a1', type:'视频', title:'水疗跑步机康复训练', dur:'0:42', src:'护士上传', pet:'P-2207', petName:'拉布拉多',
+   tags:['犬','拉布拉多','后肢','股骨骨折术后','住院第 5 天','康复训练'], desc:'拉布拉多在水疗跑步机里慢走，水位到胸口，护士在旁边扶着，后肢已经能明显负重。',
+   desens:['画面角落的院区水印已去除','画面里没有出现主人'], view:'可以公开', topics:['t6']},
+  {id:'a2', type:'视频', title:'激光理疗', dur:'0:28', src:'护士上传', pet:'P-1830', petName:'英短',
+   tags:['猫','英短','脊柱','椎间盘突出','住院第 3 天','理疗'], desc:'英短趴在理疗垫上，医生手持激光理疗仪沿脊柱两侧照射，猫咪状态放松。',
+   desens:['背景里的病历屏幕已自动打码'], view:'可以公开', topics:['t6']},
+  {id:'a3', type:'影像', title:'股骨骨折内固定术后 X 光', src:'病历助手同步', pet:'P-2207', petName:'拉布拉多',
+   tags:['犬','后肢','股骨骨折','术后复查','X 光'], desc:'股骨中段骨折，钢板内固定，对位对线良好。',
+   desens:['影像上的主人姓名和病历号已去除','院区水印已去除'], view:'可以公开', topics:['t6']},
+  {id:'a4', type:'照片', title:'绝育术后第 7 天伤口', src:'病历助手同步', pet:'P-1542', petName:'柯基',
+   tags:['犬','腹部','绝育术后','术后第 7 天'], desc:'腹部切口愈合良好，缝线整齐，没有红肿渗液。',
+   desens:['照片里的病历号标签已去除'], view:'有伤口，公开前会自动打码', topics:['t4']},
+  {id:'a5', type:'病历', title:'公猫尿闭 A-0412', src:'病历助手同步', pet:'A-0412', petName:'英短',
+   tags:['猫','英短','泌尿','尿闭','导尿','急诊'], desc:'3 岁公猫，频繁蹲砂盆无尿 1 天，触诊膀胱充盈，导尿后住院 4 天。',
+   desens:['主人姓名、电话、病历号已去除，在院内完成后才同步'], view:'', topics:['t1']},
+  {id:'a6', type:'照片', title:'住院输液中休息', src:'护士上传', pet:'P-1966', petName:'布偶',
+   tags:['猫','布偶','住院','输液'], desc:'布偶猫在住院笼里趴着输液，精神尚可。',
+   desens:['笼卡上的主人信息已去除'], view:'可以公开', topics:[]},
+];
+const ASSET_META = {
+  a1:{shot:'2026-09-08', dept:'骨科', by:'小赵', src:'护士 小赵上传'},
+  a2:{shot:'2026-09-09', dept:'骨科', by:'李医生', src:'李医生上传'},
+  a3:{shot:'2026-09-03', dept:'骨科', by:null, src:'病历助手同步'},
+  a4:{shot:'2026-08-21', dept:'外科', by:'王医生', src:'王医生上传'},
+  a5:{shot:'2026-08-14', dept:'内科', by:null, src:'病历助手同步', shotLabel:'就诊'},
+  a6:{shot:'2026-07-30', dept:'内科', by:'小赵', src:'护士 小赵上传'},
+};
+ASSETS.forEach(a=>Object.assign(a, ASSET_META[a.id]));
+const TODAY = '2026-09-10';
+const ME = {nurse:'小赵', vet:'王医生', designer:'小林'};
+const ME_SRC = {nurse:'护士 小赵上传', vet:'王医生上传', designer:'小林上传'};
+const TIME_OPTS = [['all','全部时间'],['today','今天'],['7','近 7 天'],['30','近 30 天'],['custom','自定义']];
+function daysAgo(d){ return Math.round((new Date(TODAY) - new Date(d)) / 86400000); }
+function md(d){ const [,m,dd]=d.split('-'); return `${+m}月${+dd}日`; }
+const PETS = [['P-2207','犬','拉布拉多'],['P-1830','猫','英短'],['P-1542','犬','柯基'],['P-1966','猫','布偶']];
+const OK_TYPES = {'image/jpeg':'照片','image/png':'照片','image/webp':'照片','video/mp4':'视频','video/quicktime':'视频'};
+const CASE_LIST = [
+  {id:'H-0906', pet:'P-2207', name:'豆豆', breed:'拉布拉多', species:'犬', where:'住院部 3 号笼', inpatient:true, dept:'骨科', diag:'股骨骨折内固定术后', disease:'术后康复'},
+  {id:'H-0911', pet:'P-1830', name:'奶糖', breed:'英短', species:'猫', where:'住院部 7 号笼', inpatient:true, dept:'骨科', diag:'椎间盘突出术后', disease:'术后康复'},
+  {id:'H-0915', pet:'P-1966', name:'雪球', breed:'布偶', species:'猫', where:'住院部 12 号笼', inpatient:true, dept:'内科', diag:'急性胃肠炎', disease:'急性胃肠炎'},
+  {id:'H-0917', pet:'P-2311', name:'旺财', breed:'金毛', species:'犬', where:'住院部 5 号笼', inpatient:true, dept:'皮肤科', diag:'过敏性皮炎', disease:'过敏性皮炎'},
+  {id:'M-0821', pet:'P-1542', name:'可乐', breed:'柯基', species:'犬', where:'门诊复查', inpatient:false, dept:'外科', diag:'绝育术后第 7 天复查', disease:'绝育术'},
+  {id:'M-0902', pet:'P-2288', name:'橘子', breed:'橘猫', species:'猫', where:'门诊', inpatient:false, dept:'眼科', diag:'角膜溃疡', disease:'角膜溃疡'},
+  {id:'A-0412', pet:'A-0412', name:'团子', breed:'英短', species:'猫', where:'已出院', inpatient:false, dept:'内科', diag:'尿闭，导尿后出院', disease:'猫下泌尿道疾病'},
+];
+const DEPT_ALL = ['内科','外科','骨科','心脏科','皮肤科','眼科','急诊','预防保健'];
+const PUB = {public:['可以公开','src-case'], mask:['公开前需打码','src-season'], internal:['仅内部使用','']};
+const UP_STEPS = [['识别内容','看清画面里是什么'],['自动打标签','物种、部位、病种、阶段'],['脱敏','去掉主人信息、病历号、水印'],['画面检查','伤口、血腥画面、露出的个人信息']];
+
+const CASES = [
+  ['A-0412','英短，公，3 岁','尿闭，导尿后第 4 天出院'],
+  ['B-1187','橘猫，公，5 岁','一年内第三次尿闭，已做尿道造口'],
+  ['A-0533','布偶，公，2 岁','膀胱炎，未完全堵塞'],
+];
+
+const SCRIPT_AI = [
+  ['开场','公猫在猫砂盆里蹲了很久，却只尿出几滴，甚至一滴都没有。这可能不是便秘，而是尿闭。'],
+  ['看信号','频繁进出砂盆、边尿边叫、一直舔下面、没精神、呕吐。看到其中两条，就要当急症处理。'],
+  ['为什么急','尿排不出去，毒素和血钾会很快升高，超过 24 小时就可能危及生命。'],
+  ['怎么做','别等明天，尽快带它来医院。我们是本地最好的猫科医院，治愈率 100%。回家后给它换成某品牌泌尿处方粮，多喝水。'],
+  ['结尾','下期讲讲，平时怎么做能让它少得这个病。'],
+];
+const RULES = [
+  {kind:'alert', rule:'疗效承诺', find:'治愈率 100%', fix:'绝大多数及时就医的猫咪都能顺利恢复', why:'口播里不能对治疗效果打包票。'},
+  {kind:'alert', rule:'极限用语', find:'本地最好的猫科医院', fix:'有专门猫科门诊的医院', why:'“最好”“第一”这类词不能用。'},
+  {kind:'alert', rule:'点名处方产品', find:'给它换成某品牌泌尿处方粮', fix:'按医生建议调整饮食', why:'不在科普内容里点名具体处方产品。'},
+  {kind:'alert', rule:'疗效承诺', find:'保证治好', why:'属于对治疗效果的承诺，不能用。'},
+  {kind:'alert', rule:'疗效承诺', find:'根治', why:'属于对治疗效果的承诺，不能用。'},
+  {kind:'alert', rule:'极限用语', find:'最好', why:'属于极限用语，不能用。'},
+  {kind:'alert', rule:'极限用语', find:'第一', why:'属于极限用语，不能用。'},
+  {kind:'med', rule:'请确认医学表述', find:'24 小时', why:'这是 AI 从病例里归纳的时间窗，需要你按临床经验确认。'},
+];
+const STEPS = ['选题和素材','生成脚本','医学校对','提词拍摄','AI 粗剪','交给设计师'];
+
+const TASKS = [
+  {id:'d1', from:'王医生', topic:'公猫尿闭，这是急症', title:['公猫尿闭','别等明天'], types:['科普插图','封面','片头条']},
+  {id:'d2', from:'李医生', topic:'秋季驱虫多久一次', title:['秋季驱虫','隔多久一次'], types:['封面','海报'], status:'包装中'},
+  {id:'d4', from:'陈医生', topic:'术后康复理疗合集', title:['术后康复','水疗和激光'], types:['理疗视频','封面'], status:'待包装'},
+  {id:'d3', from:'运营 小周', topic:'中秋到店体检活动', title:['中秋到店','老年宠物体检'], types:['海报','封面'], status:'待开始'},
+];
+const TEMPLATES = [['cat-uri','猫泌尿系统','兽医已审'],['dog-heart','犬心脏','兽医已审'],['cat-bone','猫骨骼','兽医已审'],['dog-teeth','犬口腔','审核中']];
+const MODELS = [['auto','自动（按任务推荐）'],['line','医学线稿风格'],['flat','扁平插画风格'],['render','立体渲染风格'],['hand','手绘风格']];
+const STYLE_NAMES = ['医学线稿','扁平插画','立体渲染','手绘风'];
+
+const NAV = [['assets','资产库','共享'],['create','开始创作','兽医'],['topics','选题池','共享'],['vet','口播制作','兽医'],['designer','设计画布','设计师'],['brand','品牌中心','共享'],['arch','架构说明','']];
+const META = {
+  brand:['品牌中心','保存品牌风格与角色设定，持续复用'],
+  create:['开始创作','说说你想讲什么，AI 先查选题池和资产库，再给你几个思路'],
+  assets:['资产库','共享病例素材与设计作品'],
+  topics:['选题池','先定做什么，再把一个选题拆给不同的人'],
+  vet:['口播制作','从选题到粗剪，一条线走完，不用学剪辑'],
+  designer:['设计画布','图片创作与视觉包装'],
+  arch:['架构说明','四个参考产品各放在哪一层，一期只做哪条线'],
+};
+
+/* ---------- 状态 ---------- */
+const S = {
+  upOpen:false, up:null, drag:false, uSeq:1,
+  cPrompt:'', cAttach:false, cErr:false, chat:null, angle:null, newId:9,
+  role:'vet', page:'assets', filter:'all', dept:'all', disease:'all', sel:'t1',
+  aType:'全部', aAuth:'all', aDept:'all', aTime:'all', aFrom:'', aTo:'', aMine:false, aSel:'a1', aTopic:null, upStep:-1, uploaded:false, tLen:'60 秒',
+  step:1, maxStep:1, cases:{'A-0412':true,'B-1187':true,'A-0533':false}, dur:'60 秒', tone:'像跟主人面对面聊',
+  script:SCRIPT_AI.map(x=>x[1]), fixedIds:{}, editing:null, medOk:false, recorded:false, recording:false, speed:3, font:22, secs:0, handed:false,
+  task:'d1', dType:'科普插图', tmpl:'cat-uri', model:'auto', gen:false, generating:false, pick:null, sent:{},
+};
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- 通用 ---------- */
+let toastTimer;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function t1(){ return TOPICS[0]; }
+function mineClaimed(){ return t1().status==='claimed' && t1().owner==='王医生'; }
+
+function render(){
+  document.body.dataset.page = S.page;
+  if(S.page!=='assets' && $('#assetModal').open) closeAssetModal(false);
+  $('#nav').innerHTML = NAV.map(([id,label,tag])=>
+    `<button data-nav="${id}" ${S.page===id?'aria-current="page"':''} title="${label}${tag?' · '+tag:''}">${hIcon(id)}<span class="nav-label">${label}</span></button>`).join('');
+  $('#title').textContent = META[S.page][0];
+  $('#subtitle').textContent = META[S.page][1];
+  document.querySelectorAll('#roleSeg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.role===S.role));
+  const v = {assets:viewAssets, create:viewCreate, topics:viewTopics, vet:viewVet, designer:viewDesigner, brand:viewBrand, arch:viewArch}[S.page]();
+  $('#view').innerHTML = v;
+  if(S.page==='designer') mountHiPawCanvas();
+  if(S.page==='vet' && S.step===4) setupPrompter();
+  document.querySelectorAll('.sec-edit').forEach(autosize);
+  if(S.page==='vet' && S.step===3 && S.editing!==null){ const ta=document.querySelector('.sec-edit'); if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }
+}
+
+/* ---------- 选题池 ---------- */
+function statusText(t){
+  const res = `<small class="${t.res[1]?'':'ok'}">${t.res[2]}</small>`;
+  if(t.status==='open') return `<span class="t-status">待认领${res}</span>`;
+  const mine = t.owner==='王医生';
+  return `<span class="t-status ${mine?'mine':''}">${mine?'我已认领':t.owner+'已认领'}${res}</span>`;
+}
+function topicBase(){ return TOPICS.filter(t=>S.filter==='all'||t.src===S.filter); }
+function topicList(){ return topicBase().filter(t=>(S.dept==='all'||t.dept===S.dept)&&(S.disease==='all'||t.disease===S.disease)); }
+function viewTopics(){
+  const base = topicBase(), list = topicList();
+  const t = list.find(x=>x.id===S.sel) || list[0];
+  if(t) S.sel = t.id;
+  const cnt = f => base.filter(f).length;
+  let cta = '';
+  if(t && S.role==='vet'){
+    if(t.status==='open') cta = `<button class="btn primary" data-act="claim">认领并开始口播</button>`;
+    else if(t.owner==='王医生') cta = `<button class="btn primary" data-act="goVet">继续制作口播</button>`;
+    else cta = `<button class="btn" disabled>${t.owner}已认领</button>`;
+  } else if(t && S.role==='designer') {
+    cta = `<button class="btn primary" data-act="toDesign">查看需要我做的</button>`;
+  }
+  const deptRow = `<div class="filters" role="group" aria-label="按专科筛选">
+      <button class="fbtn" data-dept="all" aria-pressed="${S.dept==='all'}">全部专科<span class="n">${base.length}</span></button>
+      ${DEPTS.map(([d])=>`<button class="fbtn" data-dept="${d}" aria-pressed="${S.dept===d}">${d}<span class="n">${cnt(x=>x.dept===d)}</span></button>`).join('')}
+      <select id="tSrc" aria-label="按选题来源筛选">${[['all','全部来源'],['case','来自病例'],['season','季节节点'],['trend','平台热点'],['self','兽医自提']].map(([k,l])=>`<option value="${k}" ${S.filter===k?'selected':''}>${l}</option>`).join('')}</select>
+    </div>`;
+  const subRow = S.dept==='all' ? '' : `<div class="sub-row" role="group" aria-label="按病种筛选"><span class="lab">${S.dept}下的病种</span>
+      <button class="fbtn" data-disease="all" aria-pressed="${S.disease==='all'}">全部<span class="n">${cnt(x=>x.dept===S.dept)}</span></button>
+      ${DEPTS.find(x=>x[0]===S.dept)[1].map(d=>`<button class="fbtn" data-disease="${d}" aria-pressed="${S.disease===d}">${d}<span class="n">${cnt(x=>x.disease===d)}</span></button>`).join('')}
+    </div>`;
+  const rows = list.length ? `<div class="tlist panel">${list.map(x=>`<button class="trow" data-sel="${x.id}" aria-pressed="${x.id===t.id}">
+          <span class="chip ${SRC[x.src][1]}">${SRC[x.src][0]}</span>
+          <span class="t-body"><span class="path">${x.dept} / ${x.disease}</span><strong>${x.title}</strong><span class="signal">${x.signal}</span></span>
+          ${statusText(x)}
+        </button>`).join('')}</div>`
+    : `<div class="panel empty"><p>这个分类下还没有选题。换个专科或来源看看。</p></div>`;
+  const detail = !t ? `<aside class="panel detail"><p class="hint">左边选一个选题看详情。</p></aside>` : `
+    <aside class="panel detail" aria-live="polite">
+      <span class="chip ${SRC[t.src][1]}">${SRC[t.src][0]}</span>
+      <span class="path">${t.dept} / ${t.disease}</span>
+      <h2 style="margin-top:2px">${t.title}</h2>
+      <div class="signal">${t.signal}</div>
+      <h3 class="sub">素材够不够</h3>
+      <div class="resbox"><div><b>资产库里已有</b>${t.res[0]}${(n=>n?`，另有刚上传的 ${n} 份`:'')(ASSETS.filter(a=>a.uploaded&&a.status==='ready'&&a.topics.includes(t.id)).length)}</div><div class="${t.res[1]?'lack':''}"><b>${t.res[1]?'还缺':'不缺'}</b>${t.res[1]||'可以直接开做'}</div></div>
+      <div class="row" style="margin-top:10px"><button class="btn" data-act="seeAssets">在资产库里看</button></div>
+      <h3 class="sub">这个选题拆成 ${t.formats.length} 份内容</h3>
+      <ul class="cascade">
+        ${t.formats.map(([f,who,lead])=>`<li><strong>${f}</strong>${lead?'<span class="chip src-season">其他内容的素材来源</span>':''}<span class="who">${who}</span></li>`).join('')}
+      </ul>
+      <div class="cta">${cta}</div>
+    </aside>`;
+  return `
+  <div class="topics">
+    <section>
+      ${deptRow}
+      ${subRow}
+      ${rows}
+      <p class="hint" style="margin-top:8px">数字为示例数据</p>
+    </section>
+    ${detail}
+  </div>`;
+}
+
+/* ---------- 资产库 ---------- */
+function pubState(a){ return a.type==='病历' || (a.designAsset && a.reviewStatus!=='approved') ? 'internal' : (a.view||'').includes('打码') ? 'mask' : 'public'; }
+function curAsset(){ return ASSETS.find(x=>x.id===S.aSel); }
+function rangeValid(){ return !(S.aFrom && S.aTo && S.aFrom > S.aTo); }
+function assetList(){
+  return ASSETS.filter(a=>{
+    const st=pubState(a);
+    const okType = S.aType==='全部' || a.type===S.aType;
+    const okAuth = S.aAuth==='all' || S.aAuth===st;
+    const okTopic = !S.aTopic || a.topics.includes(S.aTopic);
+    const n = daysAgo(a.shot);
+    let okTime = true;
+    if(S.aTime==='today') okTime = n===0;
+    else if(S.aTime==='7') okTime = n>=0 && n<7;
+    else if(S.aTime==='30') okTime = n>=0 && n<30;
+    else if(S.aTime==='custom' && rangeValid()) okTime = (!S.aFrom || a.shot>=S.aFrom) && (!S.aTo || a.shot<=S.aTo);
+    const okMine = !S.aMine || a.by===ME[S.role];
+    const okDept = S.aDept==='all' || a.dept===S.aDept;
+    return okType && okAuth && okTopic && okTime && okMine && okDept;
+  }).sort((x,y)=> ((y.status==='processing')-(x.status==='processing')) || y.shot.localeCompare(x.shot));
+}
+function realThumb(a, big){
+  if(a.type==='视频') return `<div class="vwrap"><video class="thumb-real" src="${a.url}#t=0.1" ${big?'controls':'muted'} preload="metadata" playsinline></video>${!big&&a.dur?`<span class="dur">${a.dur}</span>`:''}</div>`;
+  return `<img class="thumb-real" src="${a.url}" alt="${esc(a.title||'')}">`;
+}
+function assetThumb(a, big){
+  if(a.url) return realThumb(a, big);
+  const font='font-family="sans-serif"';
+  if(a.type==='视频'){
+    const water=a.tags.includes('康复训练');
+    return `<svg viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="#24332F"/>
+      ${water?'<rect y="56" width="160" height="44" fill="#3E6F7A" opacity=".85"/><path d="M0 58 Q20 53 40 58 T80 58 T120 58 T160 58" stroke="#8FC1C9" fill="none"/>':'<rect x="22" y="64" width="116" height="16" rx="8" fill="#3A4C48"/>'}
+      <ellipse cx="${water?76:84}" cy="${water?50:58}" rx="25" ry="12" fill="#C9A77A"/><circle cx="${water?101:61}" cy="${water?43:53}" r="8.5" fill="#C9A77A"/>
+      <circle cx="80" cy="28" r="12" fill="rgba(255,255,255,.2)"/><path d="M76.5 22.5 L86 28 L76.5 33.5 Z" fill="#fff"/>
+      <rect x="122" y="84" width="32" height="12" rx="3" fill="rgba(0,0,0,.55)"/><text x="138" y="93" font-size="8" fill="#fff" text-anchor="middle" ${font}>${a.dur}</text></svg>`;
+  }
+  if(a.type==='影像'){
+    return `<svg viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="#101615"/>
+      <path d="M66 4 C70 30 74 62 80 96" stroke="#CFD6D3" stroke-width="12" stroke-linecap="round" fill="none" opacity=".8"/>
+      <path d="M69 44 L73 47" stroke="#101615" stroke-width="2"/>
+      <rect x="66" y="30" width="7" height="34" rx="2" fill="#F3F5F4" transform="rotate(-9 69 47)"/>
+      <g fill="#101615"><circle cx="67" cy="35" r="1.4"/><circle cx="69" cy="45" r="1.4"/><circle cx="71" cy="55" r="1.4"/></g>
+      <rect x="112" y="8" width="40" height="10" rx="2" fill="#2B3533"/><text x="132" y="15.5" font-size="6.5" fill="#8FA09B" text-anchor="middle" ${font}>已去除姓名</text></svg>`;
+  }
+  if(a.type==='照片'){
+    const wound=a.tags.includes('绝育术后'), drip=a.tags.includes('输液');
+    return `<svg viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="${drip?'#DCE3DD':'#EADFCF'}"/>
+      <ellipse cx="80" cy="64" rx="56" ry="28" fill="${drip?'#F1EDE6':'#D8C1A0'}"/>
+      ${wound?'<path d="M56 60 L104 60" stroke="#B3412E" stroke-width="1.5" opacity=".55"/><g stroke="#5B6D68" stroke-width="1">'+[60,68,76,84,92,100].map(x=>`<path d="M${x} 56 L${x} 64"/>`).join('')+'</g>':''}
+      ${drip?'<path d="M118 0 L118 40 Q118 52 104 56" stroke="#9FB5AE" stroke-width="2" fill="none"/><circle cx="56" cy="52" r="10" fill="#E8E2D8"/>':''}
+    </svg>`;
+  }
+  return `<svg viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="#FFFFFF"/><rect x=".5" y=".5" width="159" height="99" fill="none" stroke="#D5DCD5"/>
+    <rect x="12" y="11" width="54" height="7" rx="2" fill="#17302D"/><rect x="104" y="11" width="44" height="7" rx="2" fill="#17302D" opacity=".85"/>
+    <g fill="#D5DCD5">${[28,38,48,58,68,78].map((y,i)=>`<rect x="12" y="${y}" width="${[136,120,130,98,126,80][i]}" height="4" rx="2"/>`).join('')}</g>
+    <text x="126" y="31" font-size="6.5" fill="#5B6D68" text-anchor="middle" ${font}>主人信息已遮盖</text></svg>`;
+}
+function assetDetail(a){
+  const st=pubState(a);
+  const act = st==='internal' ? `<p class="hint">病历只给 AI 起草脚本用，原文不会出现在内容里。</p>`
+    : st==='mask' ? `<p class="hint">画面里有伤口，用在公开内容时会自动打码。</p>` : '';
+  const who = a.type==='病历' ? `病例 ${a.pet}` : `${a.petName} ${a.pet}`;
+  return `<h2 style="margin-top:0">${esc(a.title)}</h2>
+    <div class="signal">${a.type}${a.dur?'，'+a.dur:''}　${who}</div>
+    <div class="signal">${md(a.shot)}${a.shotLabel||'拍摄'}　${a.src}</div>
+    <h3 class="sub">AI 写的描述</h3><p class="desc">${a.desc}</p>
+    <h3 class="sub">AI 打的标签，不对可以删掉</h3>
+    <div class="tags">${a.tags.map((t,i)=>`<button class="tag-x" data-rmtag="${a.id}|${i}" aria-label="删除标签 ${t}">${t}<span aria-hidden="true">×</span></button>`).join('')}</div>
+    <h3 class="sub">已经脱敏</h3>${a.mockProc?'<p class="hint">原型不会真正处理文件。接入后，这里会列出去掉了什么，比如主人信息、病历号和水印。</p>':`<ul class="checks">${a.desens.map(x=>`<li>${x}</li>`).join('')}</ul>`}
+    <h3 class="sub">能不能公开</h3>
+    <span class="chip ${PUB[st][1]}">${PUB[st][0]}</span>
+    ${act}
+    ${a.topics.length?`<h3 class="sub">用在哪些选题</h3><div class="row">${a.topics.map(t=>`<button class="btn" data-seltopic="${t}">${TOPICS.find(x=>x.id===t).title}</button>`).join('')}</div>`:''}`;
+}
+let assetModalContext = null;
+function updateAssetModal(resetScroll=true){
+  const a=curAsset(), ctx=assetModalContext;
+  if(!a || !ctx) return;
+  const modal=$('#assetModal');
+  const index=ctx.ids.indexOf(a.id);
+  $('#assetModalCount').textContent=`${index+1} / ${ctx.ids.length}`;
+  modal.setAttribute('aria-label', `素材详情：${a.title}`);
+  modal.querySelector('[data-act="prevAsset"]').disabled=index<=0;
+  modal.querySelector('[data-act="nextAsset"]').disabled=index>=ctx.ids.length-1;
+  if(resetScroll){
+    $('#assetModalMedia').innerHTML=`<div class="thumb">${assetThumb(a,true)}</div>${a.url?'':'<p class="media-caption">示例素材预览</p>'}`;
+  }
+  const info=$('#assetModalInfo'), infoScroll=info.scrollTop;
+  info.innerHTML=assetDetail(a);
+  info.scrollTop=resetScroll?0:infoScroll;
+  if(resetScroll) modal.querySelector('.asset-modal-body').scrollTop=0;
+}
+function openAssetModal(id, opener){
+  const ids=assetList().filter(a=>a.status!=='processing' && a.status!=='failed').map(a=>a.id);
+  if(!ids.includes(id)) return;
+  const body=document.body, root=document.documentElement;
+  assetModalContext={ids,opener:opener||document.activeElement,scrollY:window.scrollY,
+    bodyPosition:body.style.position,bodyTop:body.style.top,bodyWidth:body.style.width,rootOverflow:root.style.overflow};
+  S.aSel=id;
+  updateAssetModal();
+  body.style.position='fixed'; body.style.top=`-${assetModalContext.scrollY}px`; body.style.width='100%'; root.style.overflow='hidden';
+  $('#assetModal').showModal();
+  $('#assetModal').querySelector('[data-act="closeAsset"]').focus({preventScroll:true});
+}
+function closeAssetModal(restoreFocus=true){
+  const modal=$('#assetModal'), ctx=assetModalContext;
+  if(!ctx) return;
+  modal.querySelectorAll('video').forEach(v=>v.pause());
+  modal.close();
+  document.body.style.position=ctx.bodyPosition; document.body.style.top=ctx.bodyTop; document.body.style.width=ctx.bodyWidth;
+  document.documentElement.style.overflow=ctx.rootOverflow;
+  window.scrollTo({top:ctx.scrollY,behavior:'instant'});
+  if(restoreFocus){
+    const target=ctx.opener && ctx.opener.isConnected ? ctx.opener : document.querySelector(`[data-asel="${S.aSel}"]`);
+    if(target) target.focus({preventScroll:true});
+  }
+  assetModalContext=null;
+}
+function moveAssetModal(delta){
+  if(!assetModalContext) return;
+  const ids=assetModalContext.ids, next=ids.indexOf(S.aSel)+delta;
+  if(next<0 || next>=ids.length) return;
+  const active=document.activeElement;
+  S.aSel=ids[next]; updateAssetModal();
+  if(active && active.disabled) $('#assetModal').querySelector(`[data-act="${delta>0?'prevAsset':'nextAsset'}"]`).focus({preventScroll:true});
+}
+function viewAssets(){
+  const list=assetList();
+  const busy=S.upStep>=0;
+  const topicBar = S.aTopic ? `<div class="topic-filter">只看选题“${TOPICS.find(t=>t.id===S.aTopic).title}”的素材<button class="btn" data-act="clearTopic" style="margin-left:auto;padding:2px 10px">看全部</button></div>` : '';
+  const cards = list.map(x=>{ const st=pubState(x);
+    if(x.status==='processing') return `<div class="acard proc" aria-busy="true">${assetThumb(x)}<b>${x.title}</b><span class="proc-line">正在${UP_STEPS[x.procStep][0]}（${x.procStep+1}/4）</span></div>`;
+    return `<button class="acard" data-asel="${x.id}" aria-haspopup="dialog" aria-controls="assetModal">
+      ${assetThumb(x)}<b>${x.title}</b><span class="meta">${x.type}　${md(x.shot)}${x.shotLabel||'拍摄'}<br>${x.src}</span><span class="chip ${PUB[st][1]}">${PUB[st][0]}</span></button>`; }).join('');
+  return `<div class="assets">
+    <section>
+      <div class="panel ingest">
+        <div class="ingest-top">
+          <div><b>病历助手自动同步中</b><span class="signal">今天新增 23 份病历、41 张照片，都在院内脱敏后才同步过来</span></div>
+          <button class="btn primary" data-act="upload" ${busy?'disabled':''}>${busy?'正在入库…':S.upOpen?'收起':'上传素材'}</button>
+        </div>
+        ${S.upOpen && S.up ? uploaderHTML() : ''}
+        <ol class="pipeline" aria-label="每份素材入库都会经过的步骤">${UP_STEPS.map(([t,d],i)=>`<li class="${!busy?'':i<S.upStep?'done':i===S.upStep?'active':''}"><b>${i+1}　${t}</b>${d}</li>`).join('')}</ol>
+      </div>
+      ${topicBar}
+      <div class="filters" role="group" aria-label="按类型筛选">
+        ${['全部','视频','照片','影像','病历'].map(k=>`<button class="fbtn" data-afilter="${k}" aria-pressed="${S.aType===k}">${k}</button>`).join('')}
+        <select id="aDept" aria-label="按专科筛选" style="margin-left:auto">${[['all','全部专科'],...DEPT_ALL.map(d=>[d,d])].map(([v,l])=>`<option value="${v}" ${S.aDept===v?'selected':''}>${l}</option>`).join('')}</select>
+        <select id="aAuth" aria-label="按能否公开筛选" style="margin-left:0">${[['all','能否公开：全部'],['public','可以公开'],['mask','公开前需打码'],['internal','仅内部使用']].map(([v,l])=>`<option value="${v}" ${S.aAuth===v?'selected':''}>${l}</option>`).join('')}</select>
+      </div>
+      <div class="filters second" role="group" aria-label="按时间和上传人筛选">
+        <span class="time-note">拍摄时间</span>
+        <select id="aTime" aria-label="按拍摄时间筛选">${TIME_OPTS.map(([v,l])=>`<option value="${v}" ${S.aTime===v?'selected':''}>${l}</option>`).join('')}</select>
+        ${S.aTime==='custom'?`<input type="date" id="aFrom" aria-label="开始日期" value="${S.aFrom}" max="${TODAY}"><span class="time-note">到</span><input type="date" id="aTo" aria-label="结束日期" value="${S.aTo}" max="${TODAY}">${rangeValid()?'':'<span class="err">开始日期不能晚于结束日期</span>'}`:''}
+        ${S.role==='designer'?'':`<button class="fbtn" data-act="toggleMine" aria-pressed="${S.aMine}">只看我上传的</button>`}
+        <span class="count">共 ${list.length} 份，按拍摄时间从新到旧</span>
+      </div>
+      ${list.length?`<div class="agrid">${cards}</div>`:`<div class="panel empty"><p>${S.aTopic?'原型里没给这个选题准备示例素材。':S.aMine?'这段时间里你没有上传过素材。换个时间范围，或者点“上传素材”。':'这段时间里没有符合条件的素材，换个时间范围试试。'}</p></div>`}
+    </section>
+  </div>`;
+}
+function localDate(ms){ const d=new Date(ms); const v=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; return v>TODAY?TODAY:v; }
+function fmtDur(sec){ sec=Math.round(sec); return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`; }
+function uploaderHTML(){
+  const u=S.up;
+  const input = `<input type="file" id="fileIn" multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime" hidden>`;
+  const err = u.err?`<p class="up-err" role="alert">${esc(u.err)}</p>`:'';
+  if(!u.files.length){
+    return `<div class="uploader">
+      <div class="dropzone ${S.drag?'over':''}" id="dropzone">
+        <b>拖拽文件到这里，或截图后按 <span class="kbd">⌘</span> + <span class="kbd">V</span> 粘贴</b>
+        <p class="hint" style="margin:0 0 14px">支持 JPG、PNG、WEBP 图片和 MP4、MOV 视频，单个不超过 200MB，一次最多 20 个</p>
+        <button class="btn primary" data-act="pick">本地上传</button>
+      </div>${input}${err}
+      <div class="row" style="margin-top:10px;justify-content:flex-end"><button class="btn" data-act="cancelUp">取消</button></div>
+    </div>`;
+  }
+  const c = CASE_LIST.find(x=>x.id===u.caseId);
+  const authHint = '';
+  return `<div class="uploader">
+    <div class="flist">${u.files.map((f,i)=>`<div class="fitem">
+      <button class="x" data-rmfile="${i}" aria-label="移除 ${esc(f.name)}">×</button>
+      ${realThumb({type:f.kind,url:f.url,title:f.name,dur:f.dur?fmtDur(f.dur):''})}
+      <small title="${esc(f.name)}">${esc(f.name)}</small>
+      <label for="fd${i}">拍摄日期</label><input type="date" id="fd${i}" class="fdate" data-i="${i}" value="${f.shot}" max="${TODAY}">
+    </div>`).join('')}</div>
+    <div class="dropzone slim ${S.drag?'over':''}" id="dropzone"><span class="hint">还可以继续拖进来或粘贴，或者</span> <button class="btn" data-act="pick">本地上传</button></div>
+    ${input}
+    <div class="upform">
+      <div><label for="upQ">拍的是哪个病例（必填）</label>
+        ${c ? `<div class="case-picked"><span><b>${c.name}　${c.breed}（${c.species}）</b><span class="signal">${c.id}　${c.where}　诊断：${c.diag}</span></span><button class="linkbtn" data-act="changeCase">换一个</button></div>${authHint}`
+            : `<input id="upQ" class="case-search" type="search" placeholder="搜宠物名、病历号或笼位" value="${esc(u.q)}" autocomplete="off"><div class="case-list" id="caseList">${caseListHTML()}</div>`}
+        <p class="hint" style="margin:6px 0 0">用来自动带出专科和病种，素材也会挂到这个病例下。</p></div>
+      <div><span class="label-like" style="font-size:12.5px;color:var(--muted);display:block;margin-bottom:4px">专科（从病例带出，可以改）</span>
+        <div class="dept-chips" role="group" aria-label="专科">${DEPT_ALL.map(d=>`<button class="fbtn" data-updept="${d}" aria-pressed="${u.dept===d}">${d}</button>`).join('')}</div>
+        <p class="hint" style="margin:8px 0 0">${c ? `病种按诊断归到“${c.disease}”，入库后自动关联同病种的选题，不用手动挑。` : '选好病例后自动带出。选题会按病种自动关联，不用手动挑。'}</p></div>
+    </div>
+    ${err}
+    <div class="up-foot">
+      <span class="hint" style="margin:0">拍摄日期先按文件时间填，可以改。文件只在你的浏览器里预览，原型不会上传到服务器。</span>
+      <span class="row"><button class="btn" data-act="cancelUp">取消</button><button class="btn primary" data-act="submitUp">开始入库（${u.files.length} 个）</button></span>
+    </div>
+  </div>`;
+}
+function caseListHTML(){
+  const q=(S.up&&S.up.q||'').trim();
+  const list = q ? CASE_LIST.filter(c=>[c.name,c.breed,c.id,c.where,c.diag].some(v=>v.includes(q))) : CASE_LIST.filter(c=>c.inpatient);
+  const cap = q ? `找到 ${list.length} 个病例` : '今天在院的宠物';
+  if(!list.length) return `<div class="cap">没找到“${esc(q)}”，试试病历号或笼位号</div>`;
+  return `<div class="cap">${cap}</div>` + list.map(c=>`<button class="case-opt" data-pickcase="${c.id}"><span>${c.name}　${c.breed}<small>　${c.dept}　${c.diag}</small></span><small>${c.where}</small></button>`).join('');
+}
+function addFiles(list){
+  if(S.role==='designer'){ toast('原始素材由护士或兽医上传，设计师在这里查看和取用'); return; }
+  if(S.upStep>=0){ toast('上一批还在入库，完成后再传'); return; }
+  if(!S.up) S.up={files:[],caseId:'',q:'',dept:'',err:''};
+  const errs=[];
+  for(const f of list){
+    const name=f.name||'粘贴的截图.png';
+    if(S.up.files.length>=20){ errs.push('一次最多 20 个，其余的请分批上传'); break; }
+    const ext=(name.split('.').pop()||'').toLowerCase();
+    if(!OK_TYPES[f.type]){ errs.push((ext==='heic'||ext==='heif') ? `“${name}”是 HEIC 格式，原型预览不了，请先转成 JPG` : `“${name}”的格式暂不支持，请上传 JPG、PNG、WEBP 或 MP4、MOV`); continue; }
+    if(f.size>200*1024*1024){ errs.push(`“${name}”超过 200MB，请压缩后再传`); continue; }
+    const item={name, kind:OK_TYPES[f.type], url:URL.createObjectURL(f), shot:localDate(f.lastModified||Date.now())};
+    if(item.kind==='视频'){ const v=document.createElement('video'); v.preload='metadata'; v.onloadedmetadata=()=>{ item.dur=v.duration; if(S.page==='assets'&&S.upOpen) render(); }; v.src=item.url; }
+    S.up.files.push(item);
+  }
+  S.up.err=errs.join('；'); S.upOpen=true; S.drag=false;
+  if(S.page!=='assets') S.page='assets';
+  render();
+}
+function submitUpload(){
+  const u=S.up;
+  const c=CASE_LIST.find(x=>x.id===u.caseId);
+  if(!c){ u.err='先选拍的是哪个病例，专科和病种要从病例里带出'; return render(); }
+  const dept=u.dept||c.dept, matched=TOPICS.filter(t=>t.disease===c.disease);
+  const pet=[c.pet, c.species, c.breed];
+  const ids=[];
+  u.files.forEach(f=>{
+    const id='u'+(S.uSeq++); ids.push(id);
+    ASSETS.unshift({id, type:f.kind, title:`${c.name}（${c.breed}）${f.kind}，${md(f.shot)}`, fileName:f.name, dur:f.dur?fmtDur(f.dur):undefined,
+      src:ME_SRC[S.role], by:ME[S.role], shot:f.shot, pet:c.pet, petName:c.breed, caseId:c.id, dept, disease:c.disease, url:f.url, uploaded:true, mockProc:true,
+      status:'processing', procStep:0, tags:[c.species, c.breed, dept, c.diag, f.kind],
+      desc:'原型没有接视觉模型，这段描述先按病例信息生成。接入模型后，会写出画面里具体是什么。',
+      desens:[], view:'可以公开', topics:matched.map(t=>t.id)});
+  });
+  S.up=null; S.upOpen=false; Object.assign(S,{aType:'全部',aAuth:'all',aDept:'all',aTime:'all',aTopic:null,aMine:false});
+  S.upStep=0; render();
+  const tick=()=>{
+    S.upStep++;
+    ids.forEach(id=>{ const a=ASSETS.find(x=>x.id===id); if(a) a.procStep=Math.min(S.upStep,3); });
+    if(S.upStep>=UP_STEPS.length){
+      ids.forEach(id=>{ const a=ASSETS.find(x=>x.id===id); if(a) a.status='ready'; });
+      S.upStep=-1; S.aSel=ids[0];
+      toast(`已入库 ${ids.length} 份${matched.length?`，按病种“${c.disease}”自动关联到 ${matched.length} 个选题`:''}`);
+      if(S.page==='assets') render(); return;
+    }
+    if(S.page==='assets') render();
+    setTimeout(tick,650);
+  };
+  setTimeout(tick,650);
+}
+
+/* ---------- 开始创作 ---------- */
+const KW = {t1:['尿闭','尿不出','猫砂','排尿','尿'], t2:['驱虫','寄生虫','跳蚤','蜱'], t3:['葡萄','误食','中毒'], t4:['绝育','伸缩圈','伊丽莎白圈'],
+  t5:['咳嗽','二尖瓣'], t6:['理疗','康复','水疗'], t7:['库欣','喝水多','肚子大'], t8:['心肌病','后腿','瘫']};
+const SCENES = [
+  ['把今天的病例讲成口播','关联一个病例，AI 帮你找讲法','case'],
+  ['回答主人问得最多的问题','比如：绝育后多久能洗澡','最近门诊里好多主人问绝育后多久能洗澡、伸缩圈要戴多久'],
+  ['讲讲这个季节要注意什么','秋季驱虫、换季皮肤病','入秋了，想提醒主人按时驱虫'],
+  ['从选题池挑一个','看看已经排好的选题','pool'],
+];
+const T1_ANGLES = [
+  ['从一个真实病例讲起','用 A-0412 那只英短一天没尿出来的经历开场，再讲信号和为什么要马上就医。','适合：第一次养公猫的主人'],
+  ['三个信号，看到就去医院','开门见山列出蹲砂盆、边尿边叫、舔下面三个信号，节奏快，前三秒就抓人。','适合：刷短视频的主人'],
+  ['为什么公猫比母猫更容易堵','讲公猫尿道又细又长的结构差异，配泌尿系统示意图。','适合：想弄明白原理的主人'],
+];
+function genericAngles(subject){
+  return [
+    ['从一个真实病例讲起',`从资产库里找一个相关病例开场，再讲${subject}里主人最该知道的一点。`,'适合：第一次遇到这种情况的主人'],
+    ['主人最容易忽略的信号',`把${subject}拆成三个在家就能观察到的信号，节奏快，适合做开头。`,'适合：刷短视频的主人'],
+    ['回答一个高频问题','挑门诊里被问得最多的一个问题，一分钟讲清楚。','适合：已经在就诊的老客户'],
+  ];
+}
+function matchTopic(text, attach){
+  if(attach) return TOPICS.find(t=>t.id==='t1');
+  let best=null, score=0;
+  for(const t of TOPICS){ const kws=KW[t.id]; if(!kws) continue; const sc=kws.filter(k=>text.includes(k)).length; if(sc>score){ score=sc; best=t; } }
+  return best;
+}
+function viewCreate(){
+  const c = S.chat;
+  let chat='';
+  if(c){
+    const me = `<div class="me">${esc(c.text)}${c.attach?'<span class="chip">病例 A-0412</span>':''}</div>`;
+    if(c.pending) chat = me + `<div class="panel thinking">正在查选题池和资产库…</div>`;
+    else {
+      const t = c.match ? TOPICS.find(x=>x.id===c.match) : null;
+      const angles = t && t.id==='t1' ? T1_ANGLES : genericAngles(t ? '这个话题' : '这个话题');
+      let dup;
+      if(!t) dup = `<div class="match"><span>${c.rejected?'好的，这次另起一题。':'选题池里没有类似的选题。'}选一个角度开始后，会作为“兽医自提”加进选题池。</span></div>`;
+      else {
+        const mine = t.owner==='王医生', other = t.status==='claimed' && !mine;
+        dup = `<div class="match"><span><span class="path">${t.dept} / ${t.disease}</span><b>${t.title}</b><span class="signal">${other?t.owner+'已认领。可以换个角度另起一题，避免和同事撞题。':mine?'你已经认领了这个选题。':'还没人认领，可以直接用下面的角度开始。'}</span></span>
+          <span class="row">${!other && !mine ? `<button class="btn" data-seltopic="${t.id}">在选题池里看</button>`:''}<button class="btn" data-act="notThis">不是这个，另起一题</button></span></div>`;
+      }
+      const res = t ? `<p class="hint" style="margin:0">已有：${t.res[0]}。${t.res[1]?'还缺：'+t.res[1]+'。':'素材齐全。'}</p>`
+                    : `<p class="hint" style="margin:0">没找到直接相关的素材。开始后可以请护士补拍，也可以先做纯口播。</p>`;
+      chat = me + `<div class="panel agent">
+        <h4>选题池里有没有类似的</h4>${dup}
+        <h4>资产库里能用的素材</h4>${res}
+        <h4>三个切入角度，选一个开始</h4>
+        <div class="angles">${angles.map(([a,d,f],i)=>`<div class="angle"><b>${a}</b><p>${d}</p><span class="fit">${f}</span><button class="btn primary" data-angle="${i}">用这个角度开始</button></div>`).join('')}</div>
+        <p class="hint" style="margin:14px 0 0">这些只是思路。选定后照常走脚本、医学校对和拍摄，医学内容仍由你确认。</p>
+      </div>`;
+    }
+  }
+  return `<div class="create">
+    <h2 class="hello">今天想讲点什么？</h2>
+    <p class="hello-sub">可以说一个病例、一个主人常问的问题，或者一个想提醒大家的事</p>
+    <div class="panel composer">
+      <button class="attach ${S.cAttach?'on':''}" data-act="attach" aria-pressed="${S.cAttach}">${S.cAttach?'<span>已关联</span><b>A-0412</b><span>公猫尿闭</span>':'<span class="plus">+</span><span>关联病例</span>'}</button>
+      <textarea id="cPrompt" aria-label="描述你想讲的内容" placeholder="比如：最近好几只公猫尿闭来急诊，想提醒主人早点发现">${esc(S.cPrompt)}</textarea>
+      <div class="composer-foot">
+        <p class="hint">会先查选题池有没有撞题，再看资产库里有什么素材</p>
+        <div class="row">${S.cErr?'<span class="send-err">先说说你想讲什么，或者关联一个病例</span>':''}<button class="btn primary" data-act="ask" ${c&&c.pending?'disabled':''}>给我思路</button></div>
+      </div>
+    </div>
+    <div class="scenes">${SCENES.map(([a,b],i)=>`<button class="scene" data-scene="${i}">${a}<small>${b}</small></button>`).join('')}</div>
+    <div class="chat" aria-live="polite">${chat}</div>
+  </div>`;
+}
+function askAgent(){
+  const text = S.cPrompt.trim() || (S.cAttach ? '把这个病例讲成口播' : '');
+  if(!text){ S.cErr=true; return render(); }
+  S.cErr=false; S.chat={text, attach:S.cAttach, pending:true}; render();
+  setTimeout(()=>{ S.chat.pending=false; const m=matchTopic(text, S.chat.attach); S.chat.match=m?m.id:null; if(S.page==='create') render(); }, 900);
+}
+function pickAngle(i){
+  const c=S.chat, t=c.match?TOPICS.find(x=>x.id===c.match):null;
+  const angles = t && t.id==='t1' ? T1_ANGLES : genericAngles('这个话题');
+  const angle = angles[i][0];
+  if(t && (t.status==='open' || t.owner==='王医生')){
+    t.status='claimed'; t.owner='王医生';
+    if(t.id==='t1'){ S.angle=angle; S.page='vet'; S.step=1; S.maxStep=Math.max(S.maxStep,1); toast('已认领“'+t.title+'”，切入角度：'+angle); return render(); }
+    S.sel=t.id; S.filter='all'; S.dept='all'; S.disease='all'; S.page='topics';
+    toast('已认领。原型里只做了“公猫尿闭”这一条完整流程'); return render();
+  }
+  const id='t'+(S.newId++);
+  const title = c.text.length>28 ? c.text.slice(0,28)+'…' : c.text;
+  TOPICS.push({id, title, src:'self', signal:'王医生通过对话提出，切入角度：'+angle, dept:t?t.dept:'待归类', disease:t?t.disease:'AI 建议后由你确认',
+    formats:[['口播视频','兽医出镜',true]], status:'claimed', owner:'王医生', res:['还没查到直接相关的素材','相关病例和画面','缺素材']});
+  S.sel=id; S.filter='all'; S.dept='all'; S.disease='all'; S.page='topics';
+  toast('已作为“兽医自提”加进选题池，并由你认领'); render();
+}
+
+/* ---------- 口播制作 ---------- */
+function scan(){
+  const out=[];
+  S.script.forEach((txt,sec)=>{
+    const taken=[];
+    RULES.forEach((r,ri)=>{
+      let from=0, i;
+      while((i=txt.indexOf(r.find,from))>-1){
+        const end=i+r.find.length;
+        if(!taken.some(([a,b])=>i<b&&end>a)){ taken.push([i,end]); out.push({sec,start:i,end,ri}); }
+        from=end;
+      }
+    });
+  });
+  return out;
+}
+function secHTML(sec){
+  const txt=S.script[sec], marks=[];
+  scan().filter(m=>m.sec===sec).forEach(m=>marks.push({start:m.start,end:m.end,cls:RULES[m.ri].kind==='alert'?'m-alert':'m-med'}));
+  Object.keys(S.fixedIds).forEach(ri=>{ const f=RULES[ri].fix; let from=0,i;
+    while((i=txt.indexOf(f,from))>-1){ const end=i+f.length; if(!marks.some(x=>i<x.end&&end>x.start)) marks.push({start:i,end,cls:'m-fixed'}); from=end; } });
+  marks.sort((a,b)=>a.start-b.start);
+  let out='', pos=0;
+  marks.forEach(m=>{ out+=esc(txt.slice(pos,m.start)); const tag=m.cls==='m-fixed'?'span':'mark'; out+=`<${tag} class="${m.cls}">${esc(txt.slice(m.start,m.end))}</${tag}>`; pos=m.end; });
+  return out+esc(txt.slice(pos));
+}
+function isEdited(sec){ return S.script[sec]!==SCRIPT_AI[sec][1]; }
+function editedCount(){ return S.script.filter((t,i)=>isEdited(i)).length; }
+function readSecs(){ return Math.round(S.script.join('').replace(/\s/g,'').length/3); }
+function readLine(){
+  const secs=readSecs(), target=parseInt(S.dur);
+  return `念完大约 ${secs} 秒${secs>target*1.2?`<span class="warn">，比设定的 ${S.dur}长，念起来会赶，建议删一些</span>`:''}`;
+}
+function remaining(){ return scan().filter(m=>RULES[m.ri].kind==='alert').length + (S.medOk?0:1); }
+function scriptChanged(){
+  let msg='';
+  if(S.medOk){ S.medOk=false; msg='脚本改过了，需要重新确认医学内容'; }
+  if(S.maxStep>3){ S.maxStep=3; S.recorded=false; S.secs=0; msg='脚本改过了，拍摄前要重新校对'; }
+  if(msg){ toast(msg); const st=document.querySelector('.stepper'); if(st) st.outerHTML=stepperHTML(); }
+}
+function autosize(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+function stepperHTML(){
+  return `<ol class="stepper">${STEPS.map((s,i)=>{
+    const n=i+1, cls = n<S.step || (n<=S.maxStep && n!==S.step) ? 'done':'';
+    return `<li><button data-step="${n}" class="${cls}" ${S.step===n?'aria-current="step"':''} ${n>S.maxStep?'disabled':''}><span class="n">${n}</span>${s}</button></li>`;
+  }).join('')}</ol>`;
+}
+function viewVet(){
+  if(!mineClaimed()){
+    return `<div class="panel empty"><div class="big">还没有认领选题</div>
+      <p>可以直接说说想讲什么，让 AI 给你几个思路；也可以去选题池挑一个已经排好的题。</p>
+      <div class="row" style="justify-content:center"><button class="btn primary" data-nav="create">说说想法</button><button class="btn" data-nav="topics">去选题池</button></div></div>`;
+  }
+  const stepper = stepperHTML();
+  return stepper + [null,vStep1,vStep2,vStep3,vStep4,vStep5,vStep6][S.step]();
+}
+function vStep1(){
+  return `<div class="vgrid">
+    <section class="panel pad">
+      <h3>选题</h3><p class="big">${t1().title}</p>${S.angle?`<p class="hint" style="margin:6px 0 0">切入角度：${S.angle}。脚本会按这个角度起草。</p>`:''}
+      <h3>从哪些病例里取素材</h3>
+      <p class="hint">病例来自资产库。主人姓名、电话、病历号在院内就已去掉，不会出现在脚本和视频里。</p>
+      ${CASES.map(([id,a,b])=>`<label class="case"><input type="checkbox" data-case="${id}" ${S.cases[id]?'checked':''}><span><b>${id}</b>　${a}<small>${b}</small></span></label>`).join('')}
+    </section>
+    <section class="panel pad">
+      <h3>视频时长</h3>
+      <div class="seg" role="group" aria-label="视频时长">${['45 秒','60 秒','90 秒'].map(d=>`<button data-opt="dur" data-val="${d}" aria-pressed="${S.dur===d}">${d}</button>`).join('')}</div>
+      <h3>说话方式</h3>
+      <div class="seg" role="group" aria-label="说话方式">${['像跟主人面对面聊','偏专业讲解'].map(d=>`<button data-opt="tone" data-val="${d}" aria-pressed="${S.tone===d}">${d}</button>`).join('')}</div>
+      <h3>接下来会发生什么</h3>
+      <p class="hint">AI 按选中的病例起草一版口播稿，再逐句检查广告合规和医学表述，交给你确认。</p>
+      <div class="cta"><button class="btn primary" data-act="gen">生成脚本</button></div>
+    </section>
+  </div>`;
+}
+function vStep2(){
+  const n = Object.values(S.cases).filter(Boolean).length, ed=editedCount();
+  return `<div class="vgrid">
+    <section class="panel pad script">
+      <p class="meta-line">${S.dur}　${S.tone}　参考 ${n} 个病例　<span id="readLine">${readLine()}</span></p>
+      ${SCRIPT_AI.map(([lab],i)=>`<div class="sec"><span class="lab">${lab}<em id="ed${i}">${isEdited(i)?'已修改':''}</em></span><textarea class="sec-edit" data-sec="${i}" aria-label="${lab}" rows="2">${esc(S.script[i])}</textarea></div>`).join('')}
+    </section>
+    <section class="panel pad">
+      <h3>AI 起草的第一版，可以直接改</h3>
+      <p class="hint">按你平时说话的习惯改，改完的版本才是最终会进提词器的稿子。下一步会对改完的稿子逐句检查，标出不能说的话和需要你确认的医学表述。</p>
+      <p class="hint" id="edCount">${ed?`你改了 ${ed} 段。`:''}</p>
+      <div class="cta"><button class="btn primary" data-go="3">去医学校对</button>
+        <button class="btn" id="altBtn" data-act="${ed?'resetScript':'regen'}">${ed?'恢复 AI 原稿':'重新生成'}</button></div>
+    </section>
+  </div>`;
+}
+function vStep3(){
+  const left = remaining(), matches = scan();
+  const alerts = matches.filter(m=>RULES[m.ri].kind==='alert'), meds = matches.filter(m=>RULES[m.ri].kind==='med');
+  const issues = alerts.map(m=>{ const r=RULES[m.ri];
+      return `<div class="issue"><div class="rule alert">不能这么说：${r.rule}</div>
+        <p>“${esc(r.find)}”　${r.why}${r.fix?`建议改为：${r.fix}`:'这句需要你自己改写。'}</p>
+        ${r.fix?`<button class="btn" data-fixm="${m.sec}|${m.start}|${m.ri}">替换</button>`:`<button class="btn" data-editsec="${m.sec}">改这一句</button>`}</div>`; }).join('')
+    + Object.keys(S.fixedIds).filter(ri=>S.script.some(t=>t.includes(RULES[ri].fix))).map(ri=>{ const r=RULES[ri];
+      return `<div class="issue done"><div class="rule ok">已替换：${r.rule}</div><p><span class="was">${esc(r.find)}</span>　改为　${esc(r.fix)}</p><button class="btn" data-unfixr="${ri}">撤销</button></div>`; }).join('')
+    + meds.map(m=>{ const r=RULES[m.ri];
+      return `<div class="issue ${S.medOk?'done':''}"><div class="rule ${S.medOk?'ok':'med'}">${S.medOk?'已确认':r.rule}</div><p>“${esc(r.find)}”　${r.why}</p></div>`; }).join('');
+  const secs = SCRIPT_AI.map(([lab],i)=> S.editing===i
+    ? `<div class="sec"><span class="lab">${lab}</span><div><textarea class="sec-edit" data-sec="${i}" aria-label="${lab}" rows="2">${esc(S.script[i])}</textarea><button class="btn edit-done" data-act="doneEdit">改好了，重新检查</button></div></div>`
+    : `<div class="sec"><span class="lab">${lab}${isEdited(i)?'<em>已修改</em>':''}</span><span>${secHTML(i)}<button class="linkbtn" data-editsec="${i}" aria-label="编辑${lab}">编辑</button></span></div>`).join('');
+  return `<div class="vgrid">
+    <section class="panel pad script">
+      <p class="meta-line">红色是广告合规问题，必须改；黄色是医学表述，需要你确认。每一段都可以点“编辑”再改，改完会重新检查。</p>
+      ${secs}
+    </section>
+    <section class="panel pad">
+      <div class="left-count ${left?'':'clear'}" id="leftCount">${left?`还有 ${left} 处要处理`:'全部处理完了'}</div>
+      <h3>检查结果</h3>
+      ${issues || '<p class="hint">没有发现问题。</p>'}
+      <label class="sign"><input type="checkbox" id="medOk" ${S.medOk?'checked':''}><span>我已核对全部医学内容，同意以本人名义出镜</span></label>
+      <div class="cta"><button class="btn primary" data-go="4" ${left||S.editing!==null?'disabled':''}>去拍摄</button></div>
+    </section>
+  </div>`;
+}
+function qrHTML(){
+  let s=7, cells='';
+  const rnd=()=> (s = (s*9301+49297)%233280)/233280;
+  const finder=(r,c)=>{ for(const [R,C] of [[0,0],[0,14],[14,0]]){ const y=r-R,x=c-C; if(y>=0&&y<7&&x>=0&&x<7) return (y===0||y===6||x===0||x===6||(y>1&&y<5&&x>1&&x<5)); } return null; };
+  for(let r=0;r<21;r++) for(let c=0;c<21;c++){ const f=finder(r,c); cells += `<i class="${(f===null? rnd()>.52 : f)?'on':''}"></i>`; }
+  return `<div class="qr" aria-label="示意二维码">${cells}</div>`;
+}
+function vStep4(){
+  const lines = S.script.map(txt=>`<p>${esc(txt)}</p>`).join('');
+  return `<div class="shoot">
+    <div class="phone"><div class="cam ${S.recording?'recording':''}" id="cam">
+      <div class="silhouette"></div><div class="face"></div>
+      <div class="rec"><span class="dot"></span><span id="recTime">${fmt(S.secs)}</span></div>
+      <div class="prompter" id="prompter"><div class="prompt-inner" id="promptInner">${lines}</div></div>
+      <div class="readline" aria-hidden="true"></div>
+      <button class="recbtn" data-act="rec" aria-label="${S.recording?'暂停录制':'开始录制'}"><i></i></button>
+    </div></div>
+    <section class="panel pad">
+      <h3>在手机上拍</h3>
+      <div class="qr-wrap">${qrHTML()}<p class="hint" style="margin:0">用手机扫码，校对后的脚本会同步到手机提词器。竖屏 9:16，脸放进虚线框里。提词贴着前置镜头滚动，眼神不会飘，看起来不像在念稿。</p></div>
+      <h3>提词器</h3>
+      <div class="ctrl"><label for="spd">滚动速度</label><input id="spd" type="range" min="1" max="5" value="${S.speed}"><output id="spdOut">${S.speed}</output></div>
+      <div class="ctrl"><label for="fs">字号</label><input id="fs" type="range" min="18" max="30" value="${S.font}"><output id="fsOut">${S.font}</output></div>
+      <p class="hint">左边是网页里的预览，点红色按钮试试。</p>
+      <div class="cta">
+        <button class="btn" data-act="restart">从头再来</button>
+        <button class="btn primary" id="doneShoot" data-go="5" ${S.recorded?'':'disabled'}>拍好了，去粗剪</button>
+      </div>
+    </section>
+  </div>`;
+}
+function vStep5(){
+  return `<div class="vgrid">
+    <section class="panel pad">
+      <p class="meta-line">粗剪完成，成片 0:58</p>
+      <div class="tl-ruler"><span></span><div><span>0:00</span><span>0:15</span><span>0:30</span><span>0:45</span><span>0:58</span></div></div>
+      <div class="track"><span class="lab">画面</span><div class="bar">
+        <span class="v" style="width:18%">开场</span><span class="cut" style="width:4%" title="已剪掉的口误"></span><span class="v" style="width:20%">看信号</span><span class="cut" style="width:3%"></span><span class="v" style="width:17%">为什么急</span><span class="v" style="width:26%">怎么做</span><span class="cut" style="width:3%"></span><span class="v" style="width:9%">结尾</span>
+      </div></div>
+      <div class="track"><span class="lab">字幕</span><div class="bar">
+        ${[12,4,10,5,14,3,10,6,12,4,11,2,7].map((w,i)=>`<span class="${i%2?'gap':'sub-b'}" style="width:${w}%"></span>`).join('')}
+      </div></div>
+      <div class="track"><span class="lab">插图</span><div class="bar">
+        <span class="gap" style="width:44%"></span><span class="slot" style="width:22%">泌尿系统示意图</span><span class="gap" style="width:34%"></span>
+      </div></div>
+      <div class="track"><span class="lab">音乐</span><div class="bar"><span class="music" style="width:100%">轻音乐，音量压在人声下</span></div></div>
+      <h3>AI 已经做了</h3>
+      <ul class="checks">
+        <li>剪掉 3 处口误和长停顿（斜纹部分）</li>
+        <li>按校对后的脚本出字幕，改过的用词不会被识别回原话</li>
+        <li>在“为什么急”那段留出示意图的位置，等设计师补上</li>
+        <li>加片尾院区信息和就诊电话</li>
+      </ul>
+    </section>
+    <section class="panel pad">
+      <h3>下一步交给设计师</h3>
+      <p class="hint">设计师会收到粗剪、校对后的脚本，以及这三项需求：</p>
+      <ul class="checks"><li>3:4 封面</li><li>泌尿系统示意图</li><li>片头条（姓名和科室）</li></ul>
+      <p class="hint" style="margin-top:12px">示意图做好后会先回到你这里审核，审过才能放进视频。</p>
+      <div class="cta"><button class="btn primary" data-act="handoff">交给设计师包装</button></div>
+    </section>
+  </div>`;
+}
+function vStep6(){
+  return `<div class="panel empty">
+    <div class="big">已交给设计师小林</div>
+    <p>封面和片头条做好会直接放进交付区；泌尿系统示意图会先送回来给你审。你可以切到设计师身份看看她那边收到了什么。</p>
+    <div class="row" style="justify-content:center"><button class="btn primary" data-act="asDesigner">切换到设计师</button><button class="btn" data-nav="topics">回选题池</button></div>
+  </div>`;
+}
+function fmt(s){ s=Math.floor(s); return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; }
+
+/* 提词器 */
+let raf=null, last=0;
+function setupPrompter(){
+  const inner=$('#promptInner'); if(inner) inner.style.fontSize=S.font+'px';
+  if(S.recording){ last=performance.now(); cancelAnimationFrame(raf); raf=requestAnimationFrame(tick); }
+}
+function tick(now){
+  const el=$('#prompter'); if(!el||!S.recording) return;
+  const dt=Math.min(now-last,64); last=now;
+  el.scrollTop += S.speed*0.012*dt;
+  S.secs += dt/1000;
+  const rt=$('#recTime'); if(rt) rt.textContent=fmt(S.secs);
+  if(el.scrollTop + el.clientHeight >= el.scrollHeight - 1){ setRecording(false); toast('念完了。可以去粗剪，也可以从头再来一遍'); return; }
+  raf=requestAnimationFrame(tick);
+}
+function setRecording(on){
+  S.recording=on;
+  const cam=$('#cam'); if(cam) cam.classList.toggle('recording',on);
+  const b=document.querySelector('.recbtn'); if(b) b.setAttribute('aria-label', on?'暂停录制':'开始录制');
+  if(on){ S.recorded=true; const d=$('#doneShoot'); if(d) d.disabled=false; last=performance.now(); raf=requestAnimationFrame(tick); }
+  else cancelAnimationFrame(raf);
+}
+
+/* ---------- 包装台 ---------- */
+function taskStatus(t){ return t.id==='d1' ? (S.handed?'待包装':'王医生拍摄中') : t.status; }
+function uriSVG(style, k){
+  const bg=['#FFFFFF','#EAF1EE','#F4EFE6','#FFFDF7'][style];
+  const tint=['#FFFFFF','#E4ECE8','#F1ECE2','#FFF8EA'][k%4];
+  const stroke = style===1?'none':'#17302D';
+  const kid = style===0?'none':style===1?'#C9705F':'url(#gk'+k+')';
+  const bl = style===0?'none':style===1?'#E0A21A':'url(#gb'+k+')';
+  const dash = style===3?'stroke-dasharray="3 2"':'';
+  const sw = style===3?1.6:1.4;
+  return `<svg viewBox="0 0 200 200" aria-hidden="true">
+    <defs>
+      <radialGradient id="gk${k}" cx="40%" cy="35%"><stop offset="0" stop-color="#E7A08F"/><stop offset="1" stop-color="#A9493A"/></radialGradient>
+      <radialGradient id="gb${k}" cx="40%" cy="35%"><stop offset="0" stop-color="#F6D57E"/><stop offset="1" stop-color="#C98A0B"/></radialGradient>
+    </defs>
+    <rect width="200" height="200" fill="${style===0||style===3?tint:bg}"/>
+    <g stroke="${stroke}" stroke-width="${sw}" ${dash}>
+      <ellipse cx="68" cy="52" rx="15" ry="23" transform="rotate(-14 68 52)" fill="${kid}"/>
+      <ellipse cx="132" cy="52" rx="15" ry="23" transform="rotate(14 132 52)" fill="${kid}"/>
+      <path d="M76 70 C 84 92, 90 104, 94 118" fill="none" stroke="#17302D"/>
+      <path d="M124 70 C 116 92, 110 104, 106 118" fill="none" stroke="#17302D"/>
+      <ellipse cx="100" cy="134" rx="26" ry="21" fill="${bl}"/>
+      <path d="M100 155 L100 186" fill="none" stroke="#17302D" stroke-width="3"/>
+    </g>
+    <circle cx="100" cy="174" r="5" fill="#B3412E"/>
+    <g font-size="9" fill="#17302D" font-family="sans-serif">
+      <text x="30" y="30">肾</text><text x="126" y="98">输尿管</text><text x="136" y="140">膀胱</text><text x="110" y="177" fill="#B3412E">尿道堵塞处</text>
+    </g></svg>`;
+}
+function coverSVG(i, lines, kind){
+  const tall = kind!=='片头条';
+  if(!tall){
+    const barBg=['#17302D','#E0A21A','#FFFFFF','#2E7550'][i], barFg=i===1||i===2?'#17302D':'#FFFFFF';
+    return `<svg viewBox="0 0 200 150" aria-hidden="true"><rect width="200" height="150" fill="#2A3B38"/><ellipse cx="100" cy="150" rx="70" ry="50" fill="#3E534E"/><ellipse cx="100" cy="70" rx="24" ry="30" fill="#4A615B"/>
+      <rect x="${i%2?20:14}" y="104" width="${i===3?172:132}" height="30" rx="${i===2?15:3}" fill="${barBg}"/>
+      <text x="${i%2?30:24}" y="118" font-size="11" font-weight="700" fill="${barFg}" font-family="sans-serif">王医生</text>
+      <text x="${i%2?30:24}" y="130" font-size="8" fill="${barFg}" font-family="sans-serif" opacity=".85">HiPaw 猫科门诊 主治兽医</text></svg>`;
+  }
+  const bg=['#17302D','#EEF1EC','#E0A21A','#FFFFFF'][i], fg=i===0?'#FFFFFF':'#17302D';
+  const photoY=[118,20,26,20][i];
+  return `<svg viewBox="0 0 150 200" aria-hidden="true"><rect width="150" height="200" fill="${bg}"/>
+    <rect x="${i===2?38:12}" y="${photoY}" width="${i===2?74:126}" height="${i===0?64:90}" rx="${i===2?37:6}" fill="${i===0?'#3E534E':'#C8D4CE'}"/>
+    <text x="${i===2?75:14}" y="${i===2?84:photoY+52}" font-size="8" fill="#5B6D68" text-anchor="${i===2?'middle':'start'}" font-family="sans-serif">${i===2?'':'口播截帧'}</text>
+    <text x="14" y="${i===0?52:i===2?128:136}" font-size="${i===3?19:21}" font-weight="800" fill="${fg}" font-family="sans-serif">${esc(lines[0])}</text>
+    <text x="14" y="${i===0?78:i===2?152:160}" font-size="${i===3?15:17}" font-weight="800" fill="${i===0?'#E0A21A':fg}" font-family="sans-serif">${esc(lines[1])}</text>
+    ${i===3?'<rect x="14" y="170" width="40" height="3" fill="#E0A21A"/>':''}
+    <text x="14" y="190" font-size="7.5" fill="${fg}" opacity=".75" font-family="sans-serif">HiPaw 动物医院</text></svg>`;
+}
+function brandBlock(){
+  const colors=H.brand?.colors||[];
+  return `<h3>品牌资料</h3>
+    <div class="brandrow">${colors.length?`<div class="swatches">${colors.map(c=>`<span class="sw" style="background:${esc(c)}"></span>`).join('')}</div>`:'尚未设置医院品牌色'}</div>
+    <div class="brandrow"><button class="linkbtn" data-nav="brand">管理品牌与角色资料</button></div>`;
+}
+function therapyBoard(){
+  const ORDER={a3:0,a1:1,a7:2,a2:3};
+  const clips = ASSETS.filter(a=>a.topics.includes('t6') && a.status!=='processing').sort((x,y)=>(ORDER[x.id]??9)-(ORDER[y.id]??9));
+  const pool = clips.map(a=>`<div class="clip">${assetThumb(a)}<b>${a.title}</b><span class="signal" style="margin:0 2px">${a.type}${a.dur?'，'+a.dur:''}　${PUB[pubState(a)][0]}</span></div>`).join('');
+  let seq='';
+  if(S.gen){
+    seq = `<h3 class="sec-title">初剪顺序，${S.tLen}，字幕取自资产库里的 AI 描述</h3><div class="seq">${clips.map(a=>`<div class="shot">${assetThumb(a)}<p>${a.desc.slice(0,24)}…</p></div>`).join('')}
+      <div class="shot"><p><b>片尾</b><br>院区信息和预约电话</p></div></div>`;
+  }
+  return `<h3 class="sec-title">资产库里和这个选题相关的素材</h3><div class="clips">${pool}</div>${seq}`;
+}
+function viewDesignerLegacy(){
+  const task = TASKS.find(t=>t.id===S.task);
+  if(!task.types.includes(S.dType)) S.dType = task.types[0];
+  const waiting = task.id==='d1' && !S.handed;
+  const isMed = S.dType==='科普插图', isTherapy = S.dType==='理疗视频';
+  let board;
+  if(S.generating) board = `<div class="loading">${isTherapy?'正在挑片段、排顺序…':'正在生成 4 个候选…'}</div>`;
+  else if(isTherapy) board = therapyBoard();
+  else if(!S.gen) board = `<div class="canvas-empty">在右边选好要做什么、描述一下，生成 4 个候选放在这里。</div>`;
+  else {
+    board = `<div class="cands">${[0,1,2,3].map(i=>{
+      const style = S.model==='auto' ? i : ['line','flat','render','hand'].indexOf(S.model);
+      const art = S.dType==='科普插图' ? uriSVG(style,i) : coverSVG(i, task.title, S.dType);
+      const id = `${S.task}-${S.dType}-${i}`;
+      const name = S.dType==='科普插图' ? STYLE_NAMES[style] : '版式 '+'ABCD'[i];
+      return `<button class="cand" data-cand="${id}" aria-pressed="${S.pick===id}">${art}
+        <span class="cap"><span>候选 ${'ABCD'[i]}　${name}</span>${S.sent[id]?'<span class="rv">王医生审核中</span>':''}</span></button>`;
+    }).join('')}</div>`;
+  }
+  const typeSeg = `<h3>做什么</h3><div class="seg" role="group" aria-label="内容类型">${task.types.map(d=>`<button data-opt="dType" data-val="${d}" aria-pressed="${S.dType===d}">${d}</button>`).join('')}</div>`;
+  let tools;
+  if(isTherapy){
+    tools = typeSeg + `
+      <h3>片长</h3><div class="seg" role="group" aria-label="片长">${['30 秒','60 秒'].map(d=>`<button data-opt="tLen" data-val="${d}" aria-pressed="${S.tLen===d}">${d}</button>`).join('')}</div>
+      <h3>自动处理</h3><ul class="checks"><li>伤口画面按资产库的画面检查结果自动打码</li><li>主人面孔、工牌、病历屏幕自动打码</li><li>字幕从资产库的 AI 描述生成，可以改</li></ul>
+      ${brandBlock()}
+      <button class="btn primary" data-act="generate">${S.gen?'重新排一版':'用这些片段生成初剪'}</button>
+      <button class="btn" data-act="deliver" ${S.gen?'':'disabled'}>放进交付区</button>`;
+  } else {
+    tools = typeSeg + (isMed?`<h3>医学模板</h3>${TEMPLATES.map(([id,n,st])=>`<button class="tmpl" data-tmpl="${id}" aria-pressed="${S.tmpl===id}"><span>${n}</span><span class="chip ${st==='兽医已审'?'src-case':''}">${st}</span></button>`).join('')}
+        <p class="hint">解剖结构以模板为准，模型只负责画风，避免画错器官位置。</p>`:'') + `
+      <h3>画风和模型</h3>
+      <select id="model" aria-label="画风和模型">${MODELS.map(([v,l])=>`<option value="${v}" ${S.model===v?'selected':''}>${l}</option>`).join('')}</select>
+      <p class="hint" style="margin-top:6px">具体接哪些模型由后台统一配置，这里只选风格；选“自动”会一次给出不同风格的候选。</p>
+      ${brandBlock()}
+      <h3>补充描述</h3>
+      <textarea id="prompt" aria-label="补充描述">${isMed?'公猫泌尿系统，标出尿道最窄处的堵塞位置，给宠物主人看，不要血腥感。':'竖版封面，标题大字，放口播截帧，适合小红书。'}</textarea>
+      <button class="btn primary" data-act="generate">${S.gen?'再生成 4 个':'生成 4 个候选'}</button>
+      ${isMed
+        ? `<button class="btn" data-act="sendReview" ${S.pick&&S.pick.includes('科普插图')?'':'disabled'}>送王医生审核</button>`
+        : `<button class="btn" data-act="deliver" ${S.pick?'':'disabled'}>放进交付区</button>`}`;
+  }
+  return `<div class="design">
+    <aside class="panel inbox">
+      <h3>待处理</h3>
+      ${TASKS.map(t=>{ const st=taskStatus(t); return `<button class="ibtn" data-task="${t.id}" aria-pressed="${S.task===t.id}">
+        <b>${t.topic}</b><small>来自 ${t.from}，要 ${t.types.join('、')}</small><span class="st ${st==='待包装'?'ready':''}">${st}</span></button>`;}).join('')}
+    </aside>
+    <section class="panel canvas">
+      <div class="canvas-head"><div><h2>${task.topic}</h2><p>来自 ${task.from}　正在做：${S.dType}</p></div></div>
+      ${waiting?'<div class="notice">王医生还在拍摄，粗剪到了会出现在这里。示意图和片头条不依赖视频，可以先做。</div>':''}
+      ${board}
+    </section>
+    <aside class="panel tools">${tools}</aside>
+  </div>`;
+}
+
+/* ---------- 架构说明 ---------- */
+function viewArch(){
+  return `
+  <div class="legend"><span><i style="background:#FFFCF3;box-shadow:inset 0 0 0 2px #E0A21A"></i>一期要做</span><span><i style="border:1px dashed #5B6D68"></i>之后再做</span></div>
+  <div class="arch">
+    <div class="layer"><div class="lname"><strong>入口</strong><span>谁从哪里进来</span></div>
+      <div class="lrow c3">
+        <div class="cell p1"><b>兽医端<span class="p1tag">一期</span></b>两个入口：直接说想法，或从选题池挑。之后是一步一步的线性流程，拍摄放在手机上。</div>
+        <div class="cell p1"><b>设计师端<span class="p1tag">一期</span></b>工具台加画布，自由度高，能选风格、换模型、反复出候选。</div>
+        <div class="cell later"><b>运营端</b>发选题、排期、看各平台数据。选题池先由运营在后台录入。</div>
+      </div></div>
+    <div class="layer"><div class="lname"><strong>选题层</strong><span>决定做什么</span><em>参考 Social Cascade</em></div>
+      <div class="lrow c2">
+        <div class="cell p1"><b>选题池<span class="p1tag">一期</span></b>四种来源：病例高发信号、季节节点、平台热点，以及兽医通过对话自己提的题。一期先做“来自病例”和“兽医自提”。</div>
+        <div class="cell later"><b>一题多拆</b>一个选题拆成口播、图文、海报、护理卡，各有负责人。一期只拆出“口播视频”和它需要的包装物料。</div>
+      </div></div>
+    <div class="layer"><div class="lname"><strong>生产层</strong><span>把内容做出来</span><em>参考 开拍</em></div>
+      <div class="pipe">
+        <div class="cell p1"><b>起草脚本</b>从资产库的病历生成</div>
+        <div class="cell p1"><b>医学校对</b>合规词和医学表述</div>
+        <div class="cell p1"><b>提词拍摄</b>手机竖屏</div>
+        <div class="cell p1"><b>AI 粗剪</b>去口误、字幕、留插图位</div>
+        <div class="cell p1"><b>交付包装</b>流转到设计师</div>
+      </div></div>
+    <div class="layer"><div class="lname"><strong>能力层</strong><span>用什么模型</span><em>参考 LovmixAI</em></div>
+      <div class="lrow c2">
+        <div class="cell p1"><b>对兽医：完全不可见<span class="p1tag">一期</span></b>出思路、写脚本、语音识别、粗剪背后用哪个模型，由后台自动路由。出思路前先检索选题池和资产库，兽医不需要知道。</div>
+        <div class="cell p1"><b>对设计师：开放风格选择<span class="p1tag">一期</span></b>多个图像和视频模型聚合在一起，设计师按风格选或让系统推荐，可以一次比较多个候选。</div>
+      </div></div>
+    <div class="layer"><div class="lname"><strong>资产和规则</strong><span>别人没有的部分</span><em>资产库参考 Frontify</em></div>
+      <div class="lrow c4">
+        <div class="cell p1"><b>资产库<span class="p1tag">一期</span></b>病历从病历助手在院内脱敏后同步，照片视频由护士上传；自动打标签、脱敏、画面检查。一期只收口播用得上的</div>
+        <div class="cell p1"><b>合规词库<span class="p1tag">一期</span></b>疗效承诺、极限用语、点名处方产品</div>
+        <div class="cell p1"><b>医学模板库<span class="p1tag">一期</span></b>兽医审过的解剖结构图，模型只管画风。一期先做最常用的几套</div>
+        <div class="cell p1"><b>品牌资产<span class="p1tag">一期</span></b>品牌风格、Logo 与吉祥物资料，可按需补充；医院配色暂未设置</div>
+      </div></div>
+  </div>
+  <div class="notes">
+    <div class="panel note"><h4>四个参考各回答一个问题</h4><p>Frontify 回答“素材从哪来、能不能用”，Social Cascade 回答“做什么”，开拍回答“兽医怎么不费劲地做出来”，LovmixAI 回答“背后用什么能力”。它们在不同层，所以不冲突；放进同一个界面才会冲突。</p></div>
+    <div class="panel note"><h4>两类用户要的东西相反</h4><p>兽医要少选项、一条线、十分钟拍完；设计师要多选项、能比较、能反复改。所以做两个入口，共享同一个选题对象，而不是一个界面兼顾两种人。</p></div>
+    <div class="panel note"><h4>医疗行业多出来的两个关口</h4><p>一是口播前的医学校对和合规检查，兽医确认后才能拍；二是设计师出的医学图要回到兽医审核。素材入库时的脱敏和画面检查保证公开出去的画面不带隐私信息。这些是参考产品都没有的，也是这个工作台最该讲清楚的地方。</p></div>
+  </div>`;
+}
+
+/* ---------- 事件 ---------- */
+document.addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b || b.disabled) return;
+  const d = b.dataset;
+  if(d.nav){ if(S.recording) setRecording(false); if(S.page==='brand')captureBrandDraft(); document.body.classList.remove('hipaw-full'); S.page=d.nav; if(d.nav==='designer')S.dType='科普插图'; location.hash=d.nav; return render(); }
+  if(d.role){
+    S.role=d.role;
+    if(d.role==='nurse' && (S.page==='vet'||S.page==='designer')) S.page='assets';
+    else if(S.page==='vet' && d.role==='designer') S.page='designer';
+    else if(S.page==='designer' && d.role==='vet') S.page='vet';
+    if(d.role==='designer') S.aMine=false;
+    if(S.recording) setRecording(false);
+    return render();
+  }
+  if(d.filter){ S.filter=d.filter; const l=TOPICS.filter(t=>S.filter==='all'||t.src===S.filter); if(!l.find(t=>t.id===S.sel)) S.sel=l[0].id; return render(); }
+  if(d.sel){ S.sel=d.sel; return render(); }
+  if(d.scene){ const sc=SCENES[+d.scene]; if(sc[2]==='pool'){ S.page='topics'; return render(); } if(sc[2]==='case'){ S.cAttach=true; S.cPrompt=''; } else S.cPrompt=sc[2]; S.cErr=false; return render(); }
+  if(d.angle){ return pickAngle(+d.angle); }
+  if(d.dept){ S.dept=d.dept; S.disease='all'; return render(); }
+  if(d.disease){ S.disease=d.disease; return render(); }
+  if(d.step){ if(S.recording) setRecording(false); S.step=+d.step; return render(); }
+  if(d.go){ if(S.recording) setRecording(false); S.step=+d.go; S.maxStep=Math.max(S.maxStep,S.step); return render(); }
+  if(d.opt){ S[d.opt]=d.val; if(d.opt==='dType'){ S.gen=false; S.pick=null; } return render(); }
+  if(d.fixm){ const [sec,start,ri]=d.fixm.split('|').map(Number); const r=RULES[ri]; const t=S.script[sec];
+    if(t.slice(start,start+r.find.length)===r.find){ S.script[sec]=t.slice(0,start)+r.fix+t.slice(start+r.find.length); S.fixedIds[ri]=true; scriptChanged(); }
+    return render(); }
+  if(d.unfixr){ const r=RULES[+d.unfixr]; const sec=S.script.findIndex(t=>t.includes(r.fix)); if(sec>-1){ S.script[sec]=S.script[sec].replace(r.fix, r.find); scriptChanged(); } delete S.fixedIds[d.unfixr]; return render(); }
+  if(d.pickcase){ const c=CASE_LIST.find(x=>x.id===d.pickcase); S.up.caseId=c.id; S.up.dept=c.dept; S.up.err=''; return render(); }
+  if(d.updept){ S.up.dept=d.updept; return render(); }
+  if(d.rmfile){ const i=+d.rmfile, f=S.up.files[i]; if(f) URL.revokeObjectURL(f.url); S.up.files.splice(i,1); S.up.err=''; return render(); }
+  if(d.editsec){ S.editing=+d.editsec; return render(); }
+  if(d.task){ S.task=d.task; S.gen=false; S.pick=null; return render(); }
+  if(d.cand){ S.pick=d.cand; return render(); }
+  if(d.afilter){ S.aType=d.afilter; return render(); }
+  if(d.asel) return openAssetModal(d.asel,b);
+  if(d.goasset){ S.page='assets'; S.aSel=d.goasset; S.aTopic=null; S.aType='全部'; S.aAuth='all'; S.aDept='all'; S.aTime='all'; S.aMine=false; render(); return openAssetModal(d.goasset,document.querySelector(`[data-asel="${d.goasset}"]`)); }
+  if(d.seltopic){ S.page='topics'; S.sel=d.seltopic; S.filter='all'; S.dept='all'; S.disease='all'; return render(); }
+  if(d.rmtag){
+    const [id,i]=d.rmtag.split('|'); ASSETS.find(x=>x.id===id).tags.splice(+i,1);
+    if($('#assetModal').open){
+      updateAssetModal(false);
+      const tags=$('#assetModalInfo').querySelectorAll('[data-rmtag]');
+      const next=tags[Math.min(+i,tags.length-1)] || $('#assetModal').querySelector('[data-act="closeAsset"]');
+      next.focus({preventScroll:true}); return;
+    }
+    return render();
+  }
+  if(d.tmpl){ if(d.tmpl!=='cat-uri'){ toast('原型里只画了猫泌尿系统这一套模板'); return; } S.tmpl=d.tmpl; return render(); }
+  switch(d.act){
+    case 'closeAsset': return closeAssetModal();
+    case 'prevAsset': return moveAssetModal(-1);
+    case 'nextAsset': return moveAssetModal(1);
+    case 'claim': {
+      const t=TOPICS.find(x=>x.id===S.sel); t.status='claimed'; t.owner='王医生';
+      if(t.id==='t1'){ S.page='vet'; S.step=1; S.maxStep=Math.max(S.maxStep,1); }
+      else toast('已认领。原型里只做了“公猫尿闭”这一条完整流程');
+      return render();
+    }
+    case 'goVet': if(S.page==='topics' && S.sel!=='t1'){ toast('原型里只做了“公猫尿闭”这一条完整流程'); return; } S.page='vet'; return render();
+    case 'attach': S.cAttach=!S.cAttach; S.cErr=false; return render();
+    case 'ask': return askAgent();
+    case 'notThis': S.chat.match=null; S.chat.rejected=true; return render();
+    case 'upload': if(S.role==='designer'){ toast('原始素材由护士或兽医上传，设计师在这里查看和取用'); return; }
+      S.upOpen=!S.upOpen; if(S.upOpen && !S.up) S.up={files:[],pet:'',topic:'',err:''}; return render();
+    case 'pick': { const fi=document.getElementById('fileIn'); if(fi) fi.click(); return; }
+    case 'cancelUp': if(S.up) S.up.files.forEach(f=>URL.revokeObjectURL(f.url)); S.up=null; S.upOpen=false; return render();
+    case 'submitUp': return submitUpload();
+    case 'changeCase': S.up.caseId=''; S.up.dept=''; return render();
+    case 'toggleMine': S.aMine=!S.aMine; return render();
+    case 'seeAssets': { S.aTopic=S.sel; S.aType='全部'; S.aAuth='all'; S.aTime='all'; S.aMine=false; S.aDept='all'; S.page='assets'; const l=assetList(); if(l.length) S.aSel=l[0].id; return render(); }
+    case 'clearTopic': S.aTopic=null; return render();
+    case 'toDesign': {
+      const map={t1:'d1',t2:'d2',t6:'d4'}; const k=map[S.sel];
+      if(!k){ toast('这个选题还没人拍口播，暂时没有要包装的东西'); return; }
+      S.task=k; S.gen=false; S.pick=null; S.page='designer'; return render();
+    }
+    case 'gen': S.step=2; S.maxStep=Math.max(S.maxStep,2); return render();
+    case 'regen': toast('原型里只准备了一版脚本'); return;
+    case 'resetScript': S.script=SCRIPT_AI.map(x=>x[1]); S.fixedIds={}; scriptChanged(); toast('已恢复为 AI 原稿'); return render();
+    case 'doneEdit': S.editing=null; return render();
+    case 'rec': return setRecording(!S.recording);
+    case 'restart': { setRecording(false); S.secs=0; const p=$('#prompter'); if(p) p.scrollTop=0; const rt=$('#recTime'); if(rt) rt.textContent=fmt(0); return; }
+    case 'handoff': S.handed=true; S.step=6; S.maxStep=6; toast('已交给设计师小林'); return render();
+    case 'asDesigner': S.role='designer'; S.page='designer'; S.task='d1'; S.gen=false; S.pick=null; return render();
+    case 'generate': S.generating=true; S.pick=null; render(); setTimeout(()=>{ S.generating=false; S.gen=true; render(); }, 700); return;
+    case 'sendReview': S.sent[S.pick]=true; toast('已送王医生审核，审过才能放进视频'); return render();
+    case 'deliver': toast('已放进交付区'); return;
+  }
+});
+document.addEventListener('change', e=>{
+  const el=e.target;
+  if(el.dataset.case){ S.cases[el.dataset.case]=el.checked; return; }
+  if(el.id==='medOk'){ S.medOk=el.checked; return render(); }
+  if(el.id==='fileIn'){ const fs=[...el.files]; el.value=''; if(fs.length) addFiles(fs); return; }
+  if(el.id==='aDept'){ S.aDept=el.value; return render(); }
+  if(el.id==='upTopic'){ S.up.topic=el.value; return; }
+  if(el.classList && el.classList.contains('fdate')){ S.up.files[+el.dataset.i].shot=el.value||TODAY; return; }
+  if(el.id==='tSrc'){ S.filter=el.value; return render(); }
+  if(el.id==='aAuth'){ S.aAuth=el.value; return render(); }
+  if(el.id==='aTime'){ S.aTime=el.value; return render(); }
+  if(el.id==='aFrom'){ S.aFrom=el.value; return render(); }
+  if(el.id==='aTo'){ S.aTo=el.value; return render(); }
+  if(el.id==='model'){ S.model=el.value; if(S.gen) render(); return; }
+});
+document.addEventListener('input', e=>{
+  const el=e.target;
+  if(el.classList && el.classList.contains('sec-edit')){
+    const i=+el.dataset.sec; S.script[i]=el.value; autosize(el); scriptChanged();
+    const rl=document.getElementById('readLine'); if(rl) rl.innerHTML=readLine();
+    const em=document.getElementById('ed'+i); if(em) em.textContent=isEdited(i)?'已修改':'';
+    const ec=document.getElementById('edCount'); if(ec){ const n=editedCount(); ec.textContent=n?`你改了 ${n} 段。`:''; }
+    const ab=document.getElementById('altBtn'); if(ab){ const n=editedCount(); ab.dataset.act=n?'resetScript':'regen'; ab.textContent=n?'恢复 AI 原稿':'重新生成'; }
+  }
+  if(el.id==='upQ'){ S.up.q=el.value; const cl=document.getElementById('caseList'); if(cl) cl.innerHTML=caseListHTML(); }
+  if(el.id==='cPrompt'){ S.cPrompt=el.value; if(S.cErr){ S.cErr=false; const er=document.querySelector('.send-err'); if(er) er.remove(); } }
+  if(el.id==='spd'){ S.speed=+el.value; $('#spdOut').textContent=el.value; }
+  if(el.id==='fs'){ S.font=+el.value; $('#fsOut').textContent=el.value; const i=$('#promptInner'); if(i) i.style.fontSize=el.value+'px'; }
+});
+
+document.addEventListener('paste', e=>{
+  if(S.page!=='assets' || $('#assetModal').open) return;
+  const fs=[...((e.clipboardData&&e.clipboardData.files)||[])];
+  if(!fs.length) return;
+  e.preventDefault(); addFiles(fs);
+});
+function setDrag(on){ if(S.drag===on) return; S.drag=on; const dz=document.getElementById('dropzone'); if(dz) dz.classList.toggle('over',on); }
+document.addEventListener('dragover', e=>{ if(S.page!=='assets' || $('#assetModal').open || !e.dataTransfer || ![...e.dataTransfer.types].includes('Files')) return; e.preventDefault(); if(e.target.closest && e.target.closest('.uploader')) setDrag(true); });
+document.addEventListener('dragleave', e=>{ if(S.page==='assets' && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.uploader'))) setDrag(false); });
+document.addEventListener('drop', e=>{ if(S.page!=='assets' || $('#assetModal').open || !e.dataTransfer || !e.dataTransfer.files.length) return; e.preventDefault(); setDrag(false); addFiles([...e.dataTransfer.files]); });
+
+const assetDialog=$('#assetModal');
+assetDialog.addEventListener('cancel',e=>{e.preventDefault();closeAssetModal();});
+let assetBackdropPressed=false;
+function outsideAssetDialog(e){
+  const r=assetDialog.getBoundingClientRect();
+  return e.target===assetDialog && (e.clientX<r.left || e.clientX>r.right || e.clientY<r.top || e.clientY>r.bottom);
+}
+assetDialog.addEventListener('pointerdown',e=>{assetBackdropPressed=outsideAssetDialog(e);});
+assetDialog.addEventListener('click',e=>{if(assetBackdropPressed && outsideAssetDialog(e)) closeAssetModal();assetBackdropPressed=false;});
+startHiPaw();
+</script>
+</body>
+</html>

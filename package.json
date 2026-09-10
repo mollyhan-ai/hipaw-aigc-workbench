@@ -1,0 +1,11 @@
+{
+  "name": "hipaw-workbench",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "build:canvas": "npm --prefix vendor/infinite-canvas/web run build"
+  },
+  "engines": { "node": ">=22" }
+}

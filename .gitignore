@@ -1,0 +1,11 @@
+node_modules/
+data/
+.env
+.env.*
+!.env.example
+.DS_Store
+品牌资料/
+work/
+vendor/infinite-canvas/web/node_modules/
+vendor/infinite-canvas/web/dist/
+vendor/infinite-canvas/.git/
